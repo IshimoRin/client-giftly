@@ -36,7 +36,7 @@ Giftly — это уникальный сервис по заказу и дос�
 
 ## Сервисы командной разработки
 + [Figma]("")
-+ [Jira - доска задач](https://groupnice.atlassian.net/jira/software/projects/GFT/boards/3)
++ [Jira - доска задач]([https://groupnice.atlassian.net/jira/software/projects/GFT/boards/3](https://id.atlassian.com/invite/p/jira-software?id=Nz9hN7lHRm2m6LM9xuMs-Q))
 + [Miro]("")
 
 ## Документация проекта
