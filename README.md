@@ -31,7 +31,7 @@ Giftly — это уникальный сервис по заказу и дос�
 - Внедрение отзывов и оценок для формирования доверия к продавцам и повышения качества сервиса;
 
 ## Сервисы командной разработки
-+ [Figma]("")
++ [Figma](https://www.figma.com/design/KvNbno6IojAUMuE60NUKpL/Giftly?node-id=0-1&t=CunnZH5WBdZAB6P6-1)
 + [Jira - доска задач](https://id.atlassian.com/invite/p/jira-software?id=Nz9hN7lHRm2m6LM9xuMs-Q)
 + [Miro](https://miro.com/app/board/uXjVIQt8Zn0=/?share_link_id=221836199551)
 
