@@ -33,7 +33,7 @@ Giftly — это уникальный сервис по заказу и дос�
 ## Сервисы командной разработки
 + [Figma](https://www.figma.com/design/KvNbno6IojAUMuE60NUKpL/Giftly?node-id=0-1&t=CunnZH5WBdZAB6P6-1)
 + [Jira - доска задач](https://id.atlassian.com/invite/p/jira-software?id=Nz9hN7lHRm2m6LM9xuMs-Q)
-+ [Miro диаграммы см. здесь](https://miro.com/app/board/uXjVIQt8Zn0=/?share_link_id=221836199551)
++ [Miro (Диаграммы см. здесь)](https://miro.com/app/board/uXjVIQt8Zn0=/?share_link_id=221836199551)
 
 ## Документация проекта
 + Предпроектное исследование [(DOCX)](https://docs.google.com/document/d/1cY304LRyJpKs4qEJS8xhO-GAj994DfEndJkA6Y8Fe5g/edit?usp=sharing) [(PDF)]("")
