@@ -36,7 +36,7 @@ Giftly — это уникальный сервис по заказу и дос�
 + [Miro (Диаграммы и roadmap см. здесь)](https://miro.com/app/board/uXjVIQt8Zn0=/?share_link_id=221836199551)
 
 ## Документация проекта
-+ Предпроектное исследование [(DOCX)](https://docs.google.com/document/d/1cY304LRyJpKs4qEJS8xhO-GAj994DfEndJkA6Y8Fe5g/edit?usp=sharing) [(PDF)]("")
++ Предпроектное исследование [(DOCX)](https://docs.google.com/document/d/1cY304LRyJpKs4qEJS8xhO-GAj994DfEndJkA6Y8Fe5g/edit?usp=sharing) [(PDF)](https://github.com/Dodger0072/Programming-technologies-project/blob/main/Предпроектное%20исследование%20к%20ТЗ/Предпроектное%20исследование.pdf)
 + Техническое задание [(DOCX)](https://github.com/Dodger0072/Programming-technologies-project/blob/0247ea15be820a91b2424f81a5a3e1d606cd9c56/%D0%A2%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B5%20%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5/%D0%A2%D0%97.doc) [(PDF)](https://github.com/Dodger0072/Programming-technologies-project/blob/main/%D0%A2%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B5%20%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5/%D0%A2%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B5%20%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5.pdf)
 
 ## Презентация проекта
