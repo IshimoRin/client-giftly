@@ -17,7 +17,7 @@ Giftly — это уникальный сервис по заказу и дос�
 ## Стек технологий
 
 <img src="https://img.shields.io/badge/Django-265422?style=for-the-badge&logo=django&logoColor=white"/>  <img src="https://img.shields.io/badge/PYTHON-fff836?style=for-the-badge&logo=python&logoColor=black"/>  <img src="https://img.shields.io/badge/FLUTTER-99fff8?style=for-the-badge&logo=flutter&logoColor=black"/> 
-  <img src="https://img.shields.io/badge/DART-6eeafa?style=for-the-badge&logo=dart&logoColor=black"/>  <img src="https://img.shields.io/badge/POSTGRESQL-add8e6?style=for-the-badge&logo=postgresql&logoColor=black"/>  <img src="https://img.shields.io/badge/docker-2965ff?style=for-the-badge&logo=docker&logoColor=black"/>  <img src="https://img.shields.io/badge/POSTGRESQL-add8e6?style=for-the-badge&logo=postgresql&logoColor=black"/>
+  <img src="https://img.shields.io/badge/DART-6eeafa?style=for-the-badge&logo=dart&logoColor=black"/>  <img src="https://img.shields.io/badge/POSTGRESQL-add8e6?style=for-the-badge&logo=postgresql&logoColor=black"/>  <img src="https://img.shields.io/badge/docker-29d8ff?style=for-the-badge&logo=docker&logoColor=black"/>
 
 ## Сервисы командной разработки
 + [Figma](https://www.figma.com/design/KvNbno6IojAUMuE60NUKpL/Giftly?node-id=0-1&t=CunnZH5WBdZAB6P6-1)
