@@ -16,7 +16,7 @@ Giftly — это уникальный сервис по заказу и дос�
 
 ## Стек технологий
 
-<img src="https://img.shields.io/badge/Django-green?style=for-the-badge&logo=django&logoColor=black"/>
+<img src="https://img.shields.io/badge/Django-green?style=for-the-badge&logo=django&logoColor=black"/><img src="https://img.shields.io/badge/FLUTTER-blue?style=for-the-badge&logo=django&logoColor=black"/><img src="https://img.shields.io/badge/DART-blue?style=for-the-badge&logo=django&logoColor=black"/><img src="https://img.shields.io/badge/POSTGRESQL-add8e6?style=for-the-badge&logo=django&logoColor=black"/>
 
 ## Сервисы командной разработки
 + [Figma](https://www.figma.com/design/KvNbno6IojAUMuE60NUKpL/Giftly?node-id=0-1&t=CunnZH5WBdZAB6P6-1)
