@@ -39,7 +39,7 @@ Giftly — это уникальный сервис по заказу и дос�
 + [Видео - презентация ТЗ](https://drive.google.com/file/d/1BhGjZ7tFoYjIO4Wo1j9YUP1JnrPgwRfz/view?usp=drive_link)
 ## ✅ Чек-листы
 
-+ Чек-лист[xlsx](https://docs.google.com/spreadsheets/d/12t66YL6_T-VlFuuj86yQrHgUEHzscdUTIaRtULMLzpQ/edit?gid=0#gid=0) [pdf]()
++ Чек-лист [xlsx](https://docs.google.com/spreadsheets/d/12t66YL6_T-VlFuuj86yQrHgUEHzscdUTIaRtULMLzpQ/edit?gid=0#gid=0) [pdf]()
 
 ### 🤝 Кто нас оценивал?
 + 3 группа 3 команда [Git](https://github.com/qudest/voyago) [чек-лист](https://docs.google.com/spreadsheets/d/1OioB3z3DnBsB88rAg54IMC_nxb7ORmjc_hf41RPbbbs/edit?gid=116236438#gid=116236438)
