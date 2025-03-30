@@ -42,7 +42,7 @@ Giftly — это уникальный сервис по заказу и дос�
 + [Чек-лист]()
 
 ### 🤝 Кто нас оценивал?
-+ [3 группа 3 команда](https://github.com/qudest/voyago)
++ [3 группа 3 команда](https://docs.google.com/spreadsheets/d/1OioB3z3DnBsB88rAg54IMC_nxb7ORmjc_hf41RPbbbs/edit?gid=116236438#gid=116236438)
 + [7 группа 1 команда](https://github.com/TP-RENTPLACE)
 + [8 группа 1 команда](https://github.com/mxnmiraii/vkatun?tab=readme-ov-file)
 + [8 группа 3 команда]()
