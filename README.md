@@ -39,7 +39,7 @@ Giftly — это уникальный сервис по заказу и дос�
 + [Видео - презентация ТЗ](https://drive.google.com/file/d/1BhGjZ7tFoYjIO4Wo1j9YUP1JnrPgwRfz/view?usp=drive_link)
 ## ✅ Чек-листы
 
-+ [Чек-лист]()
++ [Чек-лист](https://docs.google.com/spreadsheets/d/1XRZH9CvlbNT1VygpgDAyDeF5XH1HX9Hw2-ph4TuT9AU/edit?gid=743530043#gid=743530043)
 
 ### 🤝 Кто нас оценивал?
 + [3 группа 3 команда](https://docs.google.com/spreadsheets/d/1OioB3z3DnBsB88rAg54IMC_nxb7ORmjc_hf41RPbbbs/edit?gid=116236438#gid=116236438)
