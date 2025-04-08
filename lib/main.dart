@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:giftly/presentation/pages/login_page.dart';
+import 'presentation/pages/splash_screen.dart'; // путь к splash
 
 void main() {
   runApp(const MyApp());
@@ -11,9 +11,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Giftly',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginPage(),
+      debugShowCheckedModeBanner: false,
+      home: const SplashScreen(),
     );
   }
 }
