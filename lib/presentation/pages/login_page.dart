@@ -1,11 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../viewmodels/login_bloc.dart';
-import '../viewmodels/login_event.dart';
-import '../viewmodels/login_state.dart';
-import '../../../domain/usecases/login_usecase.dart';
-import '../../../data/repositories/auth_repository_impl.dart';
-import 'home_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatelessWidget {

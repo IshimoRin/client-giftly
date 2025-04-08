@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:giftly/presentation/pages/login_page.dart'; // Импортируем LoginPage
-import 'package:giftly/presentation/pages/register_page.dart';
 
 void main() {
   testWidgets('LoginPage displays login fields and button', (
