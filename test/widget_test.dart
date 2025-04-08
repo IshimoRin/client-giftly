@@ -1,31 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:giftly/presentation/pages/login_page.dart';
-
-import 'package:giftly/main.dart';
+import 'package:giftly/presentation/pages/login_page.dart'; // Импортируем LoginPage
+import 'package:giftly/presentation/pages/register_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('LoginPage displays login fields and button', (
+    WidgetTester tester,
+  ) async {
+    // Строим приложение и вызываем рендеринг
     await tester.pumpWidget(MaterialApp(home: LoginPage()));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Проверяем, что на экране есть поле для ввода email
+    expect(find.byKey(const Key('emailField')), findsOneWidget);
+    expect(find.byKey(const Key('passwordField')), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Проверяем, что есть кнопка "Login"
+    expect(find.byKey(const Key('loginButton')), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Проверяем, что есть кнопка "Create an Account"
+    expect(find.byKey(const Key('registerButton')), findsOneWidget);
+  });
+
+  testWidgets('Navigate to RegisterPage when "Create an Account" is tapped', (
+    WidgetTester tester,
+  ) async {
+    // Строим приложение и вызываем рендеринг
+    await tester.pumpWidget(MaterialApp(home: LoginPage()));
+
+    // Находим кнопку для регистрации
+    final registerButton = find.byKey(const Key('registerButton'));
+    expect(registerButton, findsOneWidget);
+
+    // Тапаем по кнопке и ждем завершения навигации
+    await tester.tap(registerButton);
+    await tester.pumpAndSettle(); // Ожидаем завершения перехода
+
+    // Проверяем, что мы на экране регистрации
+    expect(
+      find.byKey(const Key('emailFieldRegister')),
+      findsOneWidget,
+    ); // Проверяем наличие поля email для регистрации
   });
 }
