@@ -61,6 +61,8 @@ flutter:
 
   assets:
     -  assets/images/splash.png
+    -  assets/images/banner.png
+    -  assets/images/bouquet_sample.png
   
 
   # To add assets to your application, add an assets section, like this:

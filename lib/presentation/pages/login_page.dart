@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
+import 'home_page.dart'; // Убедись, что этот файл существует
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -37,7 +38,7 @@ class LoginPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
-            key: _formKey, // ← это активирует валидацию и клавиатуру
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -48,83 +49,25 @@ class LoginPage extends StatelessWidget {
                   style: TextStyle(fontStyle: FontStyle.italic, fontSize: 22),
                 ),
                 const SizedBox(height: 40),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(-2, 4),
-                      ),
-                    ],
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  child: TextFormField(
-                    controller: emailController,
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.next,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: TextStyle(
-                        color: Color(0xFFB3B3B3),
-                        fontStyle: FontStyle.italic,
-                      ),
-                      border: OutlineInputBorder(borderSide: BorderSide.none),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите email';
-                      }
-                      return null;
-                    },
-                  ),
+                _buildInputField(
+                  controller: emailController,
+                  hintText: 'Email',
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Введите email'
+                              : null,
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(-2, 4),
-                      ),
-                    ],
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  child: TextFormField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Password',
-                      hintStyle: TextStyle(
-                        color: Color(0xFFB3B3B3),
-                        fontStyle: FontStyle.italic,
-                      ),
-                      border: OutlineInputBorder(borderSide: BorderSide.none),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите пароль';
-                      }
-                      return null;
-                    },
-                  ),
+                _buildInputField(
+                  controller: passwordController,
+                  hintText: 'Password',
+                  obscureText: true,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Введите пароль'
+                              : null,
                 ),
                 const SizedBox(height: 6),
                 Align(
@@ -163,6 +106,14 @@ class LoginPage extends StatelessWidget {
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text('Вход...')));
+
+                      // Переход на главную страницу
+                      Future.delayed(const Duration(milliseconds: 300), () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HomePage()),
+                        );
+                      });
                     }
                   },
                   child: const Text('Войти'),
@@ -201,6 +152,46 @@ class LoginPage extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required String? Function(String?) validator,
+    bool obscureText = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: const Offset(-2, 4),
+          ),
+        ],
+        borderRadius: BorderRadius.zero,
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            color: Color(0xFFB3B3B3),
+            fontStyle: FontStyle.italic,
+          ),
+          border: const OutlineInputBorder(borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+        validator: validator,
       ),
     );
   }
