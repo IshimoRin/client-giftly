@@ -1,36 +1,40 @@
-name: Flutter CI
-
-on: [push, pull_request]
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - master
 
 jobs:
-  test:
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Install Dependencies
+        run: npm install
+      - name: Build
+        run: npm run build-prod
+      - name: Archive Production Artifact
+        uses: actions/upload-artifact@master
         with:
-          flutter-version: '3.29.2'
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Run tests
-        run: flutter test
-
-      - name: Check formatting
-        run: dart format --set-exit-if-changed .
-
-      - name: Analyze code
-        run: flutter analyze
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          name: dist
+          path: dist
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Download Artifact
+        uses: actions/download-artifact@master
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: dist
+          path: dist
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
