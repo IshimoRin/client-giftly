@@ -30,7 +30,7 @@ jobs:
         if: success()
 
       - name: 🚀 Deploy to Firebase
-        uses: w9jds/firebase-action@v2
+        uses: w9jds/firebase-action@v3
         with:
           args: deploy --only hosting
         env:
