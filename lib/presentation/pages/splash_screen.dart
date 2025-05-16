@@ -13,7 +13,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Задержка 3 секунды, потом переход на LoginPage
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
@@ -25,8 +24,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // или другой цвет
-      body: Center(child: Image.asset('assets/images/splash.png')),
+      body: Stack(
+        children: [
+          // Фоновая картинка на весь экран
+          Image.asset(
+            'assets/images/splash.jpg',
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+          // Текст "Gifty" по центру
+          const Center(
+            child: Text(
+              'Giftly',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 10,
+                    color: Colors.black,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

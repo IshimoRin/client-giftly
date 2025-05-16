@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
-import 'home_page.dart'; // Убедись, что этот файл существует
+import 'home_page.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -43,11 +43,14 @@ class LoginPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 80),
+
                 const Text(
-                  'Добро пожаловать в GIFTLY',
+                  'Добро пожаловать в Giftly',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 22),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 22),
                 ),
+
+                // email
                 const SizedBox(height: 40),
                 _buildInputField(
                   controller: emailController,
@@ -58,6 +61,7 @@ class LoginPage extends StatelessWidget {
                               ? 'Введите email'
                               : null,
                 ),
+                // пароль
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: passwordController,
@@ -69,6 +73,7 @@ class LoginPage extends StatelessWidget {
                               ? 'Введите пароль'
                               : null,
                 ),
+
                 const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
@@ -87,6 +92,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 32),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -174,6 +180,7 @@ class LoginPage extends StatelessWidget {
         ],
         borderRadius: BorderRadius.zero,
       ),
+
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
@@ -181,7 +188,7 @@ class LoginPage extends StatelessWidget {
           hintText: hintText,
           hintStyle: const TextStyle(
             color: Color(0xFFB3B3B3),
-            fontStyle: FontStyle.italic,
+            fontFamily: 'Inter',
           ),
           border: const OutlineInputBorder(borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.symmetric(

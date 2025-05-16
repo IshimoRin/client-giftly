@@ -1,85 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:giftly/presentation/pages/favorite_page.dart';
+import 'package:giftly/presentation/pages/helper_page.dart';
+import 'package:giftly/presentation/pages/profile_page.dart';
+import 'package:giftly/presentation/widgets/bottom_nav_bar.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    _MainContent(), // Выносим главный контент в отдельный виджет
+    const HelperPage(),
+    const Center(child: Text('Корзина')),
+    const FavoritePage(),
+    const ProfilePage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Букеты, подарки и открытки',
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            filled: true,
-            fillColor: Color(0xFFF1F1F1),
-          ),
-        ),
+      appBar:
+          _currentIndex == 0
+              ? _buildAppBar()
+              : null, // Показываем AppBar только на главной
+      body: _screens[_currentIndex], // Отображаем текущий экран
+      bottomNavigationBar: BottomNavBar(
+        // отображаем нижнее меню
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset('assets/images/banner.png'),
-              const SizedBox(height: 16),
+    );
+  }
 
-              const Text(
-                'Вы недавно смотрели',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 240,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 3,
-                  itemBuilder: (context, index) => _buildBouquetCard(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Каталог букетов',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 6,
-                itemBuilder: (context, index) => _buildVerticalBouquetCard(),
-              ),
-            ],
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: const TextField(
+        decoration: InputDecoration(
+          hintText: 'Букеты, подарки и открытки',
+          prefixIcon: Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
+          filled: true,
+          fillColor: Color(0xFFF1F1F1),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.support_agent),
-            label: 'Помощник',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Корзина',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'Избранное',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
-        ],
+    );
+  }
+}
+
+// Выносим главный контент в отдельный виджет
+class _MainContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset('assets/images/banner.png'),
+            const SizedBox(height: 16),
+            const Text(
+              'Вы недавно смотрели',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 240,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (context, index) => _buildBouquetCard(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Каталог букетов',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              itemBuilder: (context, index) => _buildVerticalBouquetCard(),
+            ),
+          ],
+        ),
       ),
     );
   }
