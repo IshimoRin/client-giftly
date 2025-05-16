@@ -121,6 +121,7 @@ class ProfilePage extends StatelessWidget {
             }
           },
         ),
+
         _buildProfileOption(
           title: 'Как стать продавцом',
           icon: Icons.business,
@@ -132,7 +133,7 @@ class ProfilePage extends StatelessWidget {
           },
         ),
         _buildProfileOption(
-          title: 'О приложении',
+          title: 'О прриложении',
           icon: Icons.info,
           onTap: () {
             Navigator.push(
