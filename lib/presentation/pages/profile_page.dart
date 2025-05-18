@@ -9,7 +9,14 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Профиль'),
+        elevation: 1,
+      ),
       body: _buildProfileContent(context),
     );
   }
@@ -133,7 +140,7 @@ class ProfilePage extends StatelessWidget {
           },
         ),
         _buildProfileOption(
-          title: 'О прриложении',
+          title: 'О приложении',
           icon: Icons.info,
           onTap: () {
             Navigator.push(
