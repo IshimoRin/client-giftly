@@ -1,85 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:giftly/presentation/pages/customer/cart_page.dart';
+import 'package:giftly/presentation/pages/customer/favorite_page.dart';
+import 'package:giftly/presentation/pages/customer/helper_page.dart';
+import 'package:giftly/presentation/pages/customer/profile_page.dart';
+import 'package:giftly/presentation/pages/login_page.dart';
+import 'package:giftly/presentation/pages/seller/orders_page.dart';
+import 'package:giftly/presentation/pages/seller/stats_page.dart';
+import 'package:giftly/presentation/widgets/bottom_nav_bar.dart';
+import 'package:giftly/domain/models/user_role.dart';
+import 'package:giftly/domain/models/user.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  final User user;
+  
+  const HomePage({
+    super.key,
+    required this.user,
+  });
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = _getScreensByRole(widget.user);
+  }
+
+  List<Widget> _getScreensByRole(User user) {
+    // Базовые экраны доступны всем
+    final List<Widget> screens = [
+      _MainContent(),
+    ];
+
+    // Для гостя показываем те же страницы, что и для покупателя
+    if (user.role == UserRole.guest || user.role == UserRole.customer) {
+      screens.addAll([
+        const HelperPage(),
+        CartPage(user: user),
+        FavoritePage(user: user),
+        ProfilePage(user: user),
+      ]);
+    } else if (user.role == UserRole.seller) {
+      screens.addAll([
+        const OrdersPage(),
+        const StatsPage(),
+        ProfilePage(user: user),
+      ]);
+    }
+
+    return screens;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Букеты, подарки и открытки',
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            filled: true,
-            fillColor: Color(0xFFF1F1F1),
-          ),
-        ),
+      appBar: _currentIndex == 0 ? _buildAppBar() : null,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset('assets/images/banner.png'),
-              const SizedBox(height: 16),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        role: widget.user.role,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+    );
+  }
 
-              const Text(
-                'Вы недавно смотрели',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 240,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 3,
-                  itemBuilder: (context, index) => _buildBouquetCard(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Каталог букетов',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 6,
-                itemBuilder: (context, index) => _buildVerticalBouquetCard(),
-              ),
-            ],
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: const TextField(
+        decoration: InputDecoration(
+          hintText: 'Букеты, подарки и открытки',
+          prefixIcon: Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
+          filled: true,
+          fillColor: Color(0xFFF1F1F1),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.support_agent),
-            label: 'Помощник',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Корзина',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'Избранное',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
-        ],
+    );
+  }
+}
+
+// Выносим главный контент в отдельный виджет
+class _MainContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset('assets/images/banner.png'),
+            const SizedBox(height: 16),
+            const Text(
+              'Вы недавно смотрели',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 240,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (context, index) => _buildBouquetCard(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Каталог букетов',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              itemBuilder: (context, index) => _buildVerticalBouquetCard(),
+            ),
+          ],
+        ),
       ),
     );
   }
