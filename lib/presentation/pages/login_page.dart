@@ -71,17 +71,21 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Вход',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-            color: Colors.black,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 16.0),
+          child: const Text(
+            'Вход',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              color: Colors.black,
+            ),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        toolbarHeight: 80,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -92,21 +96,48 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                const Text(
-                  'Добро пожаловать в Giftly',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 22,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Привет, Giftly! 👋 ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Inter',
+                          fontSize: 23,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+                const Text(
+                  'Email',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -119,13 +150,32 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+                const Text(
+                  'Пароль',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Пароль',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -138,26 +188,39 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isSellerLogin,
-                      onChanged: (value) {
-                        setState(() {
-                          _isSellerLogin = value ?? false;
-                        });
-                      },
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Забыли пароль?',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const Text('Войти как продавец'),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                
+                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF9191E9),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: const Color(0xFF9191E9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    minimumSize: const Size(double.infinity, 0),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -170,26 +233,45 @@ class _LoginPageState extends State<LoginPage> {
                         )
                       : const Text(
                           'Войти',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
-                const SizedBox(height: 24),
-                TextButton(
+
+                const SizedBox(height: 16),
+                OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordPage(),
-                      ),
-                    );
+                    setState(() {
+                      _isSellerLogin = !_isSellerLogin;
+                    });
                   },
-                  child: const Text('Забыли пароль?'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: BorderSide(color: Color(0xFF9191E9)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
+                  child: Text(
+                    _isSellerLogin ? 'Войти как покупатель' : 'Войти как продавец',
+                    style: TextStyle(
+                      color: Color(0xFF9191E9),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Нет аккаунта?'),
+                    const Text(
+                      'Ещё нет аккаунта? ',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -199,7 +281,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       },
-                      child: const Text('Зарегистрироваться'),
+                      child: Text(
+                        'Зарегистрироваться',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),

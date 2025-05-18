@@ -56,7 +56,7 @@ class BottomNavBar extends StatelessWidget {
         label: 'Главная',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.help),
+        icon: Icon(Icons.smart_toy),
         label: 'Помощник',
       ),
       BottomNavigationBarItem(

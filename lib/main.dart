@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'presentation/pages/splash_screen.dart'; // путь к splash
+import 'presentation/pages/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());

@@ -53,7 +53,6 @@ class _HomePageState extends State<HomePage> {
         ProfilePage(user: user),
       ]);
     }
-
     return screens;
   }
 
@@ -66,11 +65,113 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: _currentIndex == 0 ? _buildAppBar() : null,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: _currentIndex == 0 
+        ? NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverAppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  toolbarHeight: 90,
+                  pinned: true,
+                  floating: true,
+                  expandedHeight: 150,
+                  flexibleSpace: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                    ),
+                  ),
+                  title: Padding(
+                    padding: const EdgeInsets.only(top: 34.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.support_agent,
+                              color: Color(0xFFB3B3B3),
+                              size: 22,
+                            ),
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              // TODO: Implement support
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(55),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 6.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8F8F8),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Букеты, подарки и открытки',
+                                  hintStyle: TextStyle(
+                                    color: Color(0xFFB3B3B3),
+                                    fontSize: 15,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: Color(0xFFB3B3B3),
+                                    size: 22,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 8,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.tune,
+                                color: Color(0xFFB3B3B3),
+                                size: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                // TODO: Implement filters
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ];
+            },
+            body: _screens[_currentIndex],
+          )
+        : _screens[_currentIndex],
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         role: widget.user.role,
@@ -79,24 +180,6 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      title: const TextField(
-        decoration: InputDecoration(
-          hintText: 'Букеты, подарки и открытки',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-          filled: true,
-          fillColor: Color(0xFFF1F1F1),
-        ),
       ),
     );
   }

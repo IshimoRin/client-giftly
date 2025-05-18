@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'login_page.dart'; // замените на ваш реальный путь
+import '../pages/login_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     });
   }
@@ -28,27 +28,47 @@ class _SplashScreenState extends State<SplashScreen> {
         children: [
           // Фоновая картинка на весь экран
           Image.asset(
-            'assets/images/splash.jpg',
+            'assets/images/image.png',
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
           ),
-          // Текст "Gifty" по центру
-          const Center(
-            child: Text(
-              'Giftly',
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.black,
-                    offset: Offset(2, 2),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.smart_toy,
+                  size: 120,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'GIFTLY',
+                  style: TextStyle(
+                    fontSize: 60,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Ваши подарки - наши заботы',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10,
+                        color: Colors.black,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
