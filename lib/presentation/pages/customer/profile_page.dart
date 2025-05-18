@@ -28,6 +28,12 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  void _navigateBack() {
+    setState(() {
+      _currentContent = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.user.role == UserRole.guest) {
@@ -58,9 +64,33 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             )
-          : null,
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _navigateBack,
+              ),
+              title: Text(
+                _getTitle(),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
       body: _currentContent ?? _buildMainContent(context),
     );
+  }
+
+  String _getTitle() {
+    if (_currentContent is SettingsContent) return 'Настройки';
+    if (_currentContent is OrderHistoryContent) return 'История заказов';
+    if (_currentContent is PersonalDataContent) return 'Мои данные';
+    if (_currentContent is LegalDocsContent) return 'Правовые документы';
+    if (_currentContent is ReturnPolicyContent) return 'О возврате товара';
+    if (_currentContent is SupportContent) return 'Поддержка';
+    if (_currentContent is BecomeSellerContent) return 'Как стать продавцом';
+    if (_currentContent is AboutAppContent) return 'О приложении';
+    return 'Профиль';
   }
 
   Widget _buildMainContent(BuildContext context) {
@@ -265,15 +295,6 @@ class _SettingsContentState extends State<SettingsContent> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Настройки',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 24),
-        
         // Тема приложения
         Card(
           child: Column(
@@ -421,13 +442,6 @@ class OrderHistoryContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'История заказов',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будет история заказов
         ],
@@ -446,13 +460,6 @@ class PersonalDataContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Мои данные',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будут личные данные
         ],
@@ -471,13 +478,6 @@ class LegalDocsContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Правовые документы',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будут правовые документы
         ],
@@ -496,13 +496,6 @@ class ReturnPolicyContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'О возврате товара',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будет информация о возврате
         ],
@@ -521,13 +514,6 @@ class SupportContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Поддержка',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будет поддержка
         ],
@@ -546,13 +532,6 @@ class BecomeSellerContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Как стать продавцом',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           // Здесь будет информация о том, как стать продавцом
         ],
@@ -571,13 +550,6 @@ class AboutAppContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'О приложении',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           SizedBox(height: 16),
           Text('Версия: 1.0.0'),
           SizedBox(height: 8),
