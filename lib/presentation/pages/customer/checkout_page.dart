@@ -126,7 +126,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
-                            item.product.imageUrl,
+                            item.product.image,
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,

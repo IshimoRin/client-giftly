@@ -143,7 +143,7 @@ class _FavoritePageState extends State<FavoritePage> {
                                 top: Radius.circular(12),
                               ),
                               child: Image.network(
-                                product.imageUrl,
+                                product.image,
                                 fit: BoxFit.cover,
                               ),
                             ),

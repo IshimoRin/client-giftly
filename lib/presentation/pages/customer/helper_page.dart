@@ -13,6 +13,7 @@ class _HelperPageState extends State<HelperPage> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
+  
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty || _isLoading) return;

@@ -9,6 +9,9 @@ import 'package:giftly/presentation/pages/seller/stats_page.dart';
 import 'package:giftly/presentation/widgets/bottom_nav_bar.dart';
 import 'package:giftly/domain/models/user_role.dart';
 import 'package:giftly/domain/models/user.dart';
+import 'package:giftly/data/services/product_service.dart';
+import 'package:giftly/domain/models/product.dart';
+import 'package:giftly/presentation/pages/customer/ai_helper_page.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
@@ -19,208 +22,288 @@ class HomePage extends StatefulWidget {
   });
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
-  late final List<Widget> _screens;
+  late User _currentUser;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _screens = _getScreensByRole(widget.user);
+    _currentUser = widget.user;
   }
 
-  List<Widget> _getScreensByRole(User user) {
-    // Базовые экраны доступны всем
-    final List<Widget> screens = [
-      _MainContent(),
-    ];
-
-    // Для гостя показываем те же страницы, что и для покупателя
-    if (user.role == UserRole.guest || user.role == UserRole.customer) {
-      screens.addAll([
-        const HelperPage(),
-        CartPage(user: user),
-        FavoritePage(user: user),
-        ProfilePage(user: user),
-      ]);
-    } else if (user.role == UserRole.seller) {
-      screens.addAll([
-        const OrdersPage(),
-        const StatsPage(),
-        ProfilePage(user: user),
-      ]);
-    }
-    return screens;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+  void _updateUser(User updatedUser) {
+    setState(() {
+      _currentUser = updatedUser;
+      _selectedIndex = 4; // Возвращаем на страницу профиля
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: _currentIndex == 0 
-        ? NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                SliverAppBar(
-                  backgroundColor: Colors.white,
-                  elevation: 0,
-                  toolbarHeight: 90,
-                  pinned: true,
-                  floating: true,
-                  expandedHeight: 150,
-                  flexibleSpace: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                    ),
-                  ),
-                  title: Padding(
-                    padding: const EdgeInsets.only(top: 34.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.support_agent,
-                              color: Color(0xFFB3B3B3),
-                              size: 22,
-                            ),
-                            padding: EdgeInsets.zero,
-                            onPressed: () {
-                              // TODO: Implement support
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(55),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 6.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F8F8),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Букеты, подарки и открытки',
-                                  hintStyle: TextStyle(
-                                    color: Color(0xFFB3B3B3),
-                                    fontSize: 15,
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.search,
-                                    color: Color(0xFFB3B3B3),
-                                    size: 22,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.tune,
-                                color: Color(0xFFB3B3B3),
-                                size: 22,
-                              ),
-                              padding: EdgeInsets.zero,
-                              onPressed: () {
-                                // TODO: Implement filters
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ];
-            },
-            body: _screens[_currentIndex],
-          )
-        : _screens[_currentIndex],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        role: widget.user.role,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _MainContent(),
+          const HelperPage(),
+          FavoritePage(user: _currentUser),
+          CartPage(user: _currentUser),
+          ProfilePage(
+            user: _currentUser,
+            onUserUpdated: _updateUser,
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
-            _currentIndex = index;
+            _selectedIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Главная',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'ИИ Помощник',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Избранное',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Корзина',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Профиль',
+          ),
+        ],
       ),
     );
   }
 }
 
 // Выносим главный контент в отдельный виджет
-class _MainContent extends StatelessWidget {
+class _MainContent extends StatefulWidget {
+  @override
+  State<_MainContent> createState() => _MainContentState();
+}
+
+class _MainContentState extends State<_MainContent> {
+  final ProductService _productService = ProductService();
+  List<Product> _allProducts = [];
+  bool _isLoading = true;
+  String? _error;
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedCategory = 'Все';
+
+  final List<String> _categories = [
+    'Все',
+    'Букеты',
+    'Композиции',
+    'Подарки',
+    'Акции',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final allProducts = await _productService.getProducts();
+
+      setState(() {
+        _allProducts = allProducts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<Product> get _filteredProducts {
+    return _allProducts.where((product) {
+      final matchesSearch = product.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
+          product.description.toLowerCase().contains(_searchController.text.toLowerCase());
+      final matchesCategory = _selectedCategory == 'Все' || product.name.contains(_selectedCategory);
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadProducts,
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset('assets/images/banner.png'),
             const SizedBox(height: 16),
-            const Text(
-              'Вы недавно смотрели',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Поисковая строка
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Поиск букетов...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onChanged: (value) {
+                setState(() {});
+              },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            // Кнопки поддержки и фильтрации
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Кнопка поддержки
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.support_agent, color: Color(0xFF91BDE9)),
+                    onPressed: () {
+                      // TODO: Открыть чат поддержки
+                    },
+                  ),
+                ),
+                // Кнопка фильтрации
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.filter_list, color: Color(0xFF91BDE9)),
+                    onPressed: () {
+                      // TODO: Открыть фильтры
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Категории
             SizedBox(
-              height: 240,
+              height: 40,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) => _buildBouquetCard(),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final isSelected = category == _selectedCategory;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(category),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                      },
+                      backgroundColor: Colors.grey[100],
+                      selectedColor: Theme.of(context).primaryColor,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),
+            Image.asset('assets/images/banner.png'),
+            const SizedBox(height: 24),
             const Text(
               'Каталог букетов',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            ListView.builder(
+            const SizedBox(height: 16),
+            GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: 6,
-              itemBuilder: (context, index) => _buildVerticalBouquetCard(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _filteredProducts.length,
+              itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
             ),
           ],
         ),
@@ -228,15 +311,11 @@ class _MainContent extends StatelessWidget {
     );
   }
 
-  Widget _buildBouquetCard() {
+  Widget _buildProductCard(Product product) {
     return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(12),
         color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -248,100 +327,78 @@ class _MainContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Image.asset(
-              'assets/images/bouquet_sample.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Букет невесты\nс хризантемами',
-            style: TextStyle(fontSize: 14),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          const Text('4 500 ₽', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          ElevatedButton.icon(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF9191E9),
-              minimumSize: const Size.fromHeight(30),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              foregroundColor: Colors.white,
-            ),
-            icon: const Icon(Icons.shopping_cart, size: 16),
-            label: const Text('Добавить'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerticalBouquetCard() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
+          // Изображение продукта
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/images/bouquet_sample.png',
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: product.image.isNotEmpty
+                  ? Image.network(
+                      product.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/bouquet_sample.png',
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      'assets/images/bouquet_sample.png',
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          // Информация о продукте
+          Padding(
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Букет с розами и лилиями',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  product.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Нежный букет, идеально подходит для любого праздника.',
-                  style: TextStyle(fontSize: 14),
+                Text(
+                  product.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '3 900 ₽',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      '${product.price.toStringAsFixed(0)} ₽',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF91BDE9),
+                      ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () {},
+                    ElevatedButton(
+                      onPressed: () {
+                        // TODO: Добавить в корзину
+                      },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9191E9),
+                        backgroundColor: const Color(0xFF91BDE9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        foregroundColor: Colors.white,
                       ),
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Добавить'),
+                      child: const Icon(Icons.shopping_cart, size: 20),
                     ),
                   ],
                 ),

@@ -1,27 +1,42 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../domain/models/product.dart';
 import '../../config/api_config.dart';
 
 class ProductService {
+  // Используем тот же baseUrl, что и в AuthService
+  static const String baseUrl = 'http://localhost:8000/api';
+
   // Получить список товаров
   Future<List<Product>> getProducts() async {
     try {
+      print('Fetching products from: $baseUrl/products/');
+      
       final response = await http.get(
-        Uri.parse(ApiConfig.productsUrl),
+        Uri.parse('$baseUrl/products/'),
         headers: {
           'Content-Type': 'application/json',
         },
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
+        },
       );
 
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => Product.fromJson(json)).toList();
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Product.fromJson(json)).toList();
       } else {
-        throw Exception('Не удалось загрузить товары');
+        throw Exception('Ошибка получения товаров: ${response.body}');
       }
     } catch (e) {
-      throw Exception('Ошибка: $e');
+      print('Error in getProducts: $e');
+      throw Exception('Ошибка при получении товаров: $e');
     }
   }
 
@@ -29,9 +44,14 @@ class ProductService {
   Future<List<Product>> getFavorites() async {
     try {
       final response = await http.get(
-        Uri.parse(ApiConfig.favoritesUrl),
+        Uri.parse('$baseUrl/favorites/'),
         headers: {
           'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
         },
       );
 
@@ -39,7 +59,7 @@ class ProductService {
         final List<dynamic> jsonList = json.decode(response.body);
         return jsonList.map((json) => Product.fromJson(json)).toList();
       } else {
-        throw Exception('Не удалось загрузить избранное');
+        throw Exception('Не удалось загрузить избранное: ${response.body}');
       }
     } catch (e) {
       throw Exception('Ошибка: $e');
@@ -50,15 +70,20 @@ class ProductService {
   Future<void> addToFavorites(String productId) async {
     try {
       final response = await http.post(
-        Uri.parse(ApiConfig.favoritesUrl),
+        Uri.parse('$baseUrl/favorites/'),
         headers: {
           'Content-Type': 'application/json',
         },
         body: json.encode({'product_id': productId}),
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
+        },
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Не удалось добавить в избранное');
+        throw Exception('Не удалось добавить в избранное: ${response.body}');
       }
     } catch (e) {
       throw Exception('Ошибка: $e');
@@ -69,14 +94,19 @@ class ProductService {
   Future<void> removeFromFavorites(String productId) async {
     try {
       final response = await http.delete(
-        Uri.parse('${ApiConfig.favoritesUrl}/$productId'),
+        Uri.parse('$baseUrl/favorites/$productId/'),
         headers: {
           'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
         },
       );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Не удалось удалить из избранного');
+        throw Exception('Не удалось удалить из избранного: ${response.body}');
       }
     } catch (e) {
       throw Exception('Ошибка: $e');
@@ -87,7 +117,7 @@ class ProductService {
   Future<void> addToCart(String productId, {int quantity = 1}) async {
     try {
       final response = await http.post(
-        Uri.parse(ApiConfig.cartUrl),
+        Uri.parse('$baseUrl/cart/'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -95,10 +125,15 @@ class ProductService {
           'product_id': productId,
           'quantity': quantity,
         }),
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
+        },
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Не удалось добавить в корзину');
+        throw Exception('Не удалось добавить в корзину: ${response.body}');
       }
     } catch (e) {
       throw Exception('Ошибка: $e');

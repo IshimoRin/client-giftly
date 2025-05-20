@@ -5,13 +5,16 @@ import '../../widgets/login_prompt.dart';
 import 'package:giftly/presentation/pages/about_app_page.dart';
 import 'package:giftly/presentation/pages/settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../data/services/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
+  final Function(User) onUserUpdated;
 
   const ProfilePage({
     super.key,
     required this.user,
+    required this.onUserUpdated,
   });
 
   @override
@@ -19,8 +22,15 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  late User _currentUser;
   bool _notificationsEnabled = true;
   Widget? _currentContent;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = widget.user;
+  }
 
   void _navigateTo(Widget content) {
     setState(() {
@@ -34,9 +44,17 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  void _updateUser(User updatedUser) {
+    setState(() {
+      _currentUser = updatedUser;
+      _currentContent = null;
+    });
+    widget.onUserUpdated(updatedUser);
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (widget.user.role == UserRole.guest) {
+    if (_currentUser.role == UserRole.guest) {
       return const Scaffold(
         body: LoginPrompt(
           message: 'Войдите или зарегистрируйтесь, чтобы получить доступ к профилю',
@@ -44,59 +62,34 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Scaffold(
-      appBar: _currentContent == null
-          ? AppBar(
-              title: const Text(
-                'Профиль',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    // TODO: Implement edit profile
-                  },
-                ),
-              ],
-            )
-          : AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _navigateBack,
-              ),
-              title: Text(
-                _getTitle(),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-      body: _currentContent ?? _buildMainContent(context),
-    );
-  }
+    if (_currentContent != null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _navigateBack,
+          ),
+          title: Text(
+            _currentContent is PersonalDataContent ? 'Личные данные' : 'Профиль',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        body: _currentContent,
+      );
+    }
 
-  String _getTitle() {
-    if (_currentContent is SettingsContent) return 'Настройки';
-    if (_currentContent is OrderHistoryContent) return 'История заказов';
-    if (_currentContent is PersonalDataContent) return 'Мои данные';
-    if (_currentContent is LegalDocsContent) return 'Правовые документы';
-    if (_currentContent is ReturnPolicyContent) return 'О возврате товара';
-    if (_currentContent is SupportContent) return 'Поддержка';
-    if (_currentContent is BecomeSellerContent) return 'Как стать продавцом';
-    if (_currentContent is AboutAppContent) return 'О приложении';
-    return 'Профиль';
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Профиль'),
+      ),
+      body: _buildMainContent(context),
+    );
   }
 
   Widget _buildMainContent(BuildContext context) {
     return ListView(
       children: [
-        if (widget.user.role != UserRole.guest) ...[
+        if (_currentUser.role != UserRole.guest) ...[
           // Аватар и имя пользователя
           Container(
             padding: const EdgeInsets.all(16),
@@ -104,25 +97,25 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundImage: widget.user.photoUrl != null
-                      ? NetworkImage(widget.user.photoUrl!)
+                  backgroundImage: _currentUser.photoUrl != null
+                      ? NetworkImage(_currentUser.photoUrl!)
                       : null,
-                  child: widget.user.photoUrl == null
+                  child: _currentUser.photoUrl == null
                       ? const Icon(Icons.person, size: 50)
                       : null,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  widget.user.name ?? 'Пользователь',
+                  _currentUser.name ?? 'Пользователь',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (widget.user.email != null) ...[
+                if (_currentUser.email != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    widget.user.email!,
+                    _currentUser.email!,
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -138,21 +131,6 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildProfileOptions(context),
 
         const SizedBox(height: 24),
-
-        // Кнопка выхода
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Implement logout
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Выйти'),
-          ),
-        ),
       ],
     );
   }
@@ -160,6 +138,16 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildProfileOptions(BuildContext context) {
     return Column(
       children: [
+        _buildOptionTile(
+          title: 'Личные данные',
+          icon: Icons.person,
+          onTap: () {
+            _navigateTo(PersonalDataContent(
+              user: _currentUser,
+              onUserUpdated: _updateUser,
+            ));
+          },
+        ),
         _buildProfileOption(
           context: context,
           title: 'Настройки',
@@ -168,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _navigateTo(const SettingsContent());
           },
         ),
-        if (widget.user.role != UserRole.guest)
+        if (_currentUser.role != UserRole.guest)
           _buildProfileOption(
             context: context,
             title: 'История заказов',
@@ -177,14 +165,6 @@ class _ProfilePageState extends State<ProfilePage> {
               _navigateTo(const OrderHistoryContent());
             },
           ),
-        _buildProfileOption(
-          context: context,
-          title: 'Мои данные',
-          icon: Icons.person,
-          onTap: () {
-            _navigateTo(const PersonalDataContent());
-          },
-        ),
         _buildProfileOption(
           context: context,
           title: 'Правовые документы',
@@ -241,6 +221,19 @@ class _ProfilePageState extends State<ProfilePage> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildOptionTile({
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+      onTap: onTap,
     );
   }
 
@@ -450,19 +443,255 @@ class OrderHistoryContent extends StatelessWidget {
   }
 }
 
-class PersonalDataContent extends StatelessWidget {
-  const PersonalDataContent({super.key});
+class PersonalDataContent extends StatefulWidget {
+  final User user;
+  final Function(User) onUserUpdated;
+
+  const PersonalDataContent({
+    super.key,
+    required this.user,
+    required this.onUserUpdated,
+  });
+
+  @override
+  State<PersonalDataContent> createState() => _PersonalDataContentState();
+}
+
+class _PersonalDataContentState extends State<PersonalDataContent> {
+  final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  DateTime? _birthDate;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize form fields with user data
+    final nameParts = widget.user.name?.split(' ') ?? [];
+    _firstNameController.text = nameParts.isNotEmpty ? nameParts[0] : '';
+    _lastNameController.text = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+    _phoneController.text = widget.user.phone ?? '';
+    _birthDate = widget.user.birthDate;
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _birthDate) {
+      setState(() {
+        _birthDate = picked;
+      });
+    }
+  }
+
+  Future<void> _saveData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final updatedUser = await AuthService().updateProfile(
+        userId: widget.user.id,
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        phone: _phoneController.text,
+        birthDate: _birthDate,
+      );
+
+      if (mounted) {
+        widget.onUserUpdated(updatedUser);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Данные успешно обновлены'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будут личные данные
-        ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Имя',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _firstNameController,
+              decoration: InputDecoration(
+                hintText: 'Введите имя',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Фамилия',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: InputDecoration(
+                hintText: 'Введите фамилию',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Телефон',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                hintText: 'Введите номер телефона',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Дата рождения',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => _selectDate(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.grey.shade50,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _birthDate != null
+                          ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
+                          : 'Выберите дату',
+                      style: TextStyle(
+                        color: _birthDate != null ? Colors.black : Colors.grey,
+                      ),
+                    ),
+                    const Icon(Icons.calendar_today, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _saveData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF91BDE9),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Сохранить',
+                      style: TextStyle(fontSize: 16),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
