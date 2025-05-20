@@ -5,33 +5,38 @@ import '../../domain/models/product.dart';
 import '../../config/api_config.dart';
 
 class ProductService {
-  // Используем тот же baseUrl, что и в AuthService
-  static const String baseUrl = 'http://localhost:8000/api';
-
   // Получить список товаров
   Future<List<Product>> getProducts() async {
     try {
-      print('Fetching products from: $baseUrl/products/');
+      print('Fetching products from: ${ApiConfig.productsUrl}');
       
       final response = await http.get(
-        Uri.parse('$baseUrl/products/'),
+        Uri.parse(ApiConfig.productsUrl),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       ).timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 10),
         onTimeout: () {
           throw TimeoutException('Превышено время ожидания ответа от сервера');
         },
       );
 
       print('Response status code: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => Product.fromJson(json)).toList();
+        try {
+          final List<dynamic> data = jsonDecode(response.body);
+          return data.map((json) => Product.fromJson(json)).toList();
+        } catch (e) {
+          print('Error parsing JSON: $e');
+          throw Exception('Ошибка при обработке данных: $e');
+        }
       } else {
+        print('Error response: ${response.body}');
         throw Exception('Ошибка получения товаров: ${response.body}');
       }
     } catch (e) {
@@ -44,7 +49,7 @@ class ProductService {
   Future<List<Product>> getFavorites() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/favorites/'),
+        Uri.parse(ApiConfig.favoritesUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -70,7 +75,7 @@ class ProductService {
   Future<void> addToFavorites(String productId) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/favorites/'),
+        Uri.parse(ApiConfig.favoritesUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -94,7 +99,7 @@ class ProductService {
   Future<void> removeFromFavorites(String productId) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/favorites/$productId/'),
+        Uri.parse('${ApiConfig.favoritesUrl}$productId/'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -117,7 +122,7 @@ class ProductService {
   Future<void> addToCart(String productId, {int quantity = 1}) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/cart/'),
+        Uri.parse(ApiConfig.cartUrl),
         headers: {
           'Content-Type': 'application/json',
         },

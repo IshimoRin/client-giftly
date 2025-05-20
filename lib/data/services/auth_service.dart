@@ -1,16 +1,12 @@
 import '../../domain/models/user.dart';
 import '../../domain/models/user_role.dart';
+import '../../config/api_config.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  // Используем IP-адрес компьютера
-  // Используем localhost вместо 127.0.0.1
-  static const String baseUrl = 'http://localhost:8000/api';
-  // 
-
   Future<User> login({
     required String email,
     required String password,
@@ -18,7 +14,7 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/users/login/'),
+        Uri.parse(ApiConfig.loginUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -78,7 +74,7 @@ class AuthService {
       print('Sending update profile request: $body'); // Debug print
 
       final response = await http.patch(
-        Uri.parse('$baseUrl/users/$userId/'),
+        Uri.parse('${ApiConfig.baseUrl}/users/$userId/'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -114,14 +110,13 @@ class AuthService {
     }
   }
 
-  // метод регистрации
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/users/register/'),
+        Uri.parse(ApiConfig.registerUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -147,23 +142,22 @@ class AuthService {
     }
   }
 
-
-Future<void> testConnection() async {
-  try {
-    print('Тестируем подключение к: $baseUrl/users/');
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/'),
-    ).timeout(
-      const Duration(seconds: 5),
-      onTimeout: () {
-        print('Таймаут при подключении');
-        throw TimeoutException('Превышено время ожидания ответа от сервера');
-      },
-    );
-    print('Status Code: ${response.statusCode}');
-    print('Response Body: ${response.body}');
-  } catch (e) {
-    print('Error: $e');
+  Future<void> testConnection() async {
+    try {
+      print('Тестируем подключение к: ${ApiConfig.baseUrl}/users/');
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/users/'),
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print('Таймаут при подключении');
+          throw TimeoutException('Превышено время ожидания ответа от сервера');
+        },
+      );
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+    } catch (e) {
+      print('Error: $e');
+    }
   }
-}
 } 
