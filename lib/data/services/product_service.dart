@@ -15,19 +15,39 @@ class ProductService {
   // Получить список товаров
   Future<List<Product>> getProducts() async {
     try {
+      print('Debug: Запрашиваем список товаров с ${ApiConfig.baseUrl}/products/');
       final response = await _dio.get('/products/');
+      print('Debug: Получен ответ от сервера. Статус: ${response.statusCode}');
+      print('Debug: Сырые данные от сервера: ${response.data}');
+      
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        return data.map((json) => Product.fromJson(json)).toList();
+        print('Debug: Получено ${data.length} товаров');
+        
+        final products = data.map((json) {
+          try {
+            print('Debug: Обрабатываем товар с данными: $json');
+            final product = Product.fromJson(json);
+            print('Debug: Обработан товар ${product.name} с изображением ${product.image}');
+            return product;
+          } catch (e) {
+            print('Debug: Ошибка при обработке товара: $e');
+            rethrow;
+          }
+        }).toList();
+        
+        return products;
       }
-      throw Exception('Failed to load products');
+      throw Exception('Failed to load products: ${response.statusCode}');
     } on DioException catch (e) {
+      print('Debug: Ошибка Dio при загрузке товаров: ${e.message}');
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw Exception('Превышено время ожидания ответа от сервера');
       }
       throw Exception('Ошибка при загрузке товаров: ${e.message}');
     } catch (e) {
+      print('Debug: Неизвестная ошибка при загрузке товаров: $e');
       throw Exception('Ошибка при загрузке товаров: $e');
     }
   }

@@ -39,7 +39,7 @@ dependencies:
   freezed_annotation: ^2.4.1
   dio: ^5.4.1
   flutter_secure_storage: ^9.0.0
-  cached_network_image: ^3.3.0
+  cached_network_image: ^3.3.1
   cupertino_icons: ^1.0.2
   my_app: ^1.0.0
   provider: ^6.1.1

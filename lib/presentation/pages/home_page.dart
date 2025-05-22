@@ -6,6 +6,7 @@ import 'customer/favorite_page.dart';
 import 'customer/helper_page.dart';
 import '../../data/services/product_service.dart';
 import '../../domain/models/product.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
@@ -163,73 +164,171 @@ class _MainContentState extends State<_MainContent> {
     }
 
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Популярные товары',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Time and Location
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Text(
+                          '19:22', // Replace with actual time logic
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.send, size: 18, color: Colors.blueAccent),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: const [
+                        Icon(Icons.location_on, size: 18, color: Colors.redAccent),
+                        SizedBox(width: 4),
+                        Text(
+                          'Воронеж', // Replace with actual location logic
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Chat and Phone Icons
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.redAccent,
+                      radius: 20,
+                      child: IconButton(
+                        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
+                        onPressed: () {
+                          // Handle chat tap
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    CircleAvatar(
+                      backgroundColor: Colors.redAccent,
+                      radius: 20,
+                      child: IconButton(
+                        icon: const Icon(Icons.phone, color: Colors.white, size: 20),
+                        onPressed: () {
+                          // Handle phone tap
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextFormField(
+              decoration: InputDecoration(
+                hintText: 'Дом, дача, стройка и ремонт',
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                suffixIcon: const Icon(Icons.qr_code_scanner_outlined, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
             ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: _products.length,
-              itemBuilder: (context, index) {
-                final product = _products[index];
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.network(
-                        product.image,
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Популярные товары',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemCount: _products.length,
+            itemBuilder: (context, index) {
+              final product = _products[index];
+              return Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: product.image,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9191E9)),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Image.asset(
+                        'assets/images/bouquet_sample.png',
                         height: 120,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${product.price.toStringAsFixed(0)} ₽',
-                              style: const TextStyle(
-                                color: Color(0xFF91BDE9),
-                                fontWeight: FontWeight.bold,
-                              ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${product.price.toStringAsFixed(0)} ₽',
+                            style: const TextStyle(
+                              color: Color(0xFF91BDE9),
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

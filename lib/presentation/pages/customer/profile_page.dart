@@ -319,7 +319,7 @@ class _SettingsContentState extends State<SettingsContent> {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -548,7 +548,7 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -771,7 +771,7 @@ class _PersonalDataContentState extends State<PersonalDataContent> {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -949,7 +949,7 @@ class LegalDocsContent extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -986,7 +986,7 @@ class ReturnPolicyContent extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -1023,7 +1023,7 @@ class SupportContent extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -1060,7 +1060,7 @@ class BecomeSellerContent extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),
@@ -1097,7 +1097,7 @@ class AboutAppContent extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 23,
           ),
         ),
       ),

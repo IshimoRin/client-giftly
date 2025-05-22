@@ -13,6 +13,7 @@ import 'package:client_giftly/data/services/product_service.dart';
 import 'package:client_giftly/data/services/cart_service.dart';
 import 'package:client_giftly/domain/models/product.dart';
 import 'package:client_giftly/presentation/widgets/product_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
@@ -120,6 +121,7 @@ class _MainContentState extends State<_MainContent> {
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Все';
+  bool _isAscending = true; // Добавляем состояние для сортировки
 
   final List<String> _categories = [
     'Все',
@@ -150,25 +152,48 @@ class _MainContentState extends State<_MainContent> {
 
       final allProducts = await _productService.getProducts();
 
-      setState(() {
-        _allProducts = allProducts;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _allProducts = allProducts;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   List<Product> get _filteredProducts {
-    return _allProducts.where((product) {
-      final matchesSearch = product.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-          product.description.toLowerCase().contains(_searchController.text.toLowerCase());
+    var filtered = _allProducts.where((product) {
+      final searchLower = _searchController.text.toLowerCase();
+      final matchesSearch = searchLower.isEmpty || 
+          product.name.toLowerCase().contains(searchLower) ||
+          (product.description?.toLowerCase().contains(searchLower) ?? false);
       final matchesCategory = _selectedCategory == 'Все' || product.name.contains(_selectedCategory);
       return matchesSearch && matchesCategory;
     }).toList();
+
+    // Сортировка по цене
+    filtered.sort((a, b) {
+      if (_isAscending) {
+        return a.price.compareTo(b.price);
+      } else {
+        return b.price.compareTo(a.price);
+      }
+    });
+
+    return filtered;
+  }
+
+  void _toggleSort() {
+    setState(() {
+      _isAscending = !_isAscending;
+    });
   }
 
   void _onProductTap(Product product) {
@@ -253,135 +278,169 @@ class _MainContentState extends State<_MainContent> {
       );
     }
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            // Поисковая строка
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Поиск букетов...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Color(0xFFDFDFDF),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
-            const SizedBox(height: 16),
-            // Кнопки поддержки и фильтрации
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadProducts();
+      },
+      child: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0, top: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Кнопка поддержки
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Location
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, size: 18, color: Color(0xFF9191E9)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Воронеж',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // Support Button
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEEFF1),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.support_agent, color: Color(0xFF9191E9), size: 20),
+                          onPressed: () {
+                            // TODO: Открыть чат поддержки
+                          },
+                        ),
                       ),
                     ],
-                  ),
-
-                  child: IconButton(
-                    icon: const Icon(Icons.support_agent, color: Colors.black),
-                    onPressed: () {
-                      // TODO: Открыть чат поддержки
-                    },
                   ),
                 ),
-                // Кнопка фильтрации
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                const SizedBox(height: 16),
+                // Search Bar and Filter Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Поиск по названию или описанию',
+                            hintStyle: TextStyle(color: Colors.grey[600]),
+                            prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFEEEFF1),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                          ),
+                          onChanged: (value) {
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Кнопка сортировки
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEEFF1),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                            color: const Color(0xFF9191E9),
+                            size: 20,
+                          ),
+                          onPressed: _toggleSort,
+                          tooltip: _isAscending ? 'По возрастанию' : 'По убыванию',
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEEFF1),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.filter_list, color: Color(0xFF9191E9), size: 20),
+                          onPressed: () {
+                            // TODO: Открыть фильтры
+                          },
+                        ),
                       ),
                     ],
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.filter_list, color: Colors.black),
-                    onPressed: () {
-                      // TODO: Открыть фильтры
-                    },
+                ),
+                const SizedBox(height: 24),
+                Image.asset('assets/images/banner.png'),
+                const SizedBox(height: 24),
+                const Text(
+                  'Каталог букетов',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
                   ),
+                  itemCount: _filteredProducts.length,
+                  itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Категории
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  final category = _categories[index];
-                  final isSelected = category == _selectedCategory;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(category),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedCategory = category;
-                        });
-                      },
-                      backgroundColor: Colors.grey[100],
-                      selectedColor: Theme.of(context).primaryColor,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            Image.asset('assets/images/banner.png'),
-            const SizedBox(height: 24),
-            const Text(
-              'Каталог букетов',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -406,24 +465,33 @@ class _MainContentState extends State<_MainContent> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  product.image,
-                  width: double.infinity,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CachedNetworkImage(
+                    imageUrl: product.image,
+                    width: double.infinity,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9191E9)),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Image.asset(
                       'assets/images/bouquet_sample.png',
                       width: double.infinity,
-                      height: 120,
+                      height: 100,
                       fit: BoxFit.cover,
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 16,
+                right: 16,
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -491,49 +559,68 @@ class _MainContentState extends State<_MainContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
+                  // Product Name
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Product Description (Added)
+                  if (product.description != null && product.description!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0), // Spacing between name and description
+                      child: Text(
+                        product.description!,
+                        style: TextStyle(
+                          fontSize: 11, // Smaller font size for description
+                          color: Colors.grey[700],
                         ),
-                        maxLines: 2,
+                        maxLines: 2, // Limit description to 2 lines
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${product.price.toStringAsFixed(0)} ₽',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                    ),
+                  const SizedBox(height: 4), // Spacing between description/name and price/button block
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${product.price.toStringAsFixed(0)} ₽',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _addToCart(product),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF91BDE9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => _addToCart(product),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF9191E9),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 6), // Reduced vertical padding
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'В корзину',
+                              style: TextStyle(
+                                fontSize: 12, // Reduced font size
+                              ),
+                            ),
+                          ),
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'В корзину',
-                        style: TextStyle(
-                          fontSize: 14,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
