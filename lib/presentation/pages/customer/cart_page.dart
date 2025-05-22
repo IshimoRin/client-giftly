@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/services/cart_service.dart';
 import '../../../domain/models/cart.dart';
 import '../../../domain/models/user.dart';
@@ -188,19 +189,27 @@ class CartPageState extends State<CartPage> {
                       child: ListTile(
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item.image,
+                          child: CachedNetworkImage(
+                            imageUrl: item.image,
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 50,
-                                height: 50,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.image_not_supported),
-                              );
-                            },
+                            placeholder: (context, url) => Container(
+                              width: 50,
+                              height: 50,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9191E9)),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/images/bouquet_sample.png',
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         title: Text(item.name),

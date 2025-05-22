@@ -1,5 +1,6 @@
 // lib/pages/favorites_page.dart
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../domain/models/user.dart';
 import '../../../domain/models/user_role.dart';
 import '../../widgets/login_prompt.dart';
@@ -153,11 +154,25 @@ class _FavoritePageState extends State<FavoritePage> {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(8),
                     ),
-                    child: Image.network(
-                      product.image,
+                    child: CachedNetworkImage(
+                      imageUrl: product.image,
                       width: double.infinity,
                       height: 200,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.image_not_supported),
+                      ),
                     ),
                   ),
                   Positioned(

@@ -8,7 +8,7 @@ class ApiConfig {
       return 'http://10.0.2.2:8000/api'; // для Android эмулятора
     }
     // URL продакшн API
-    return 'https://185.91.54.146/api';
+    return 'http://185.91.54.146/api';
   }
 
   // API ключ (если требуется)

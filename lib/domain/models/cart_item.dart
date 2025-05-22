@@ -21,25 +21,29 @@ class CartItem {
   double get totalPrice => price * quantity;
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    print('Debug: CartItem.fromJson входные данные: $json');
+    
     // Если json содержит вложенный объект product
     if (json['product'] != null) {
       final product = json['product'];
+      print('Debug: Обработка вложенного product: $product');
       return CartItem(
         id: json['id'].toString(),
         productId: product['id'].toString(),
         name: product['name'],
-        image: _getValidImageUrl(product['image']),
+        image: _getValidImageUrl(product['image_url']),
         price: double.parse(product['price'].toString()),
         quantity: json['quantity'] ?? 1,
       );
     }
     
     // Если json содержит прямые поля
+    print('Debug: Обработка прямых полей');
     return CartItem(
       id: json['id'].toString(),
       productId: json['product_id'].toString(),
       name: json['name'],
-      image: _getValidImageUrl(json['image']),
+      image: _getValidImageUrl(json['image_url']),
       price: double.parse(json['price'].toString()),
       quantity: json['quantity'] ?? 1,
     );
@@ -47,16 +51,37 @@ class CartItem {
 
   static String _getValidImageUrl(dynamic imageUrl) {
     if (imageUrl == null || imageUrl.toString().isEmpty) {
+      print('Debug: Пустой URL изображения, используем заглушку');
       return 'assets/images/bouquet_sample.png';
     }
+    
     final url = imageUrl.toString();
+    print('Debug: Обработка URL изображения: $url');
+    
+    // Если URL уже полный
     if (url.startsWith('http://') || url.startsWith('https://')) {
+      print('Debug: URL уже полный: $url');
       return url;
     }
-    if (url.startsWith('/')) {
-      return url.substring(1);
+    
+    // Если URL начинается с /media/
+    if (url.startsWith('/media/')) {
+      final fullUrl = 'http://185.91.54.146$url';
+      print('Debug: Преобразован URL с /media/: $fullUrl');
+      return fullUrl;
     }
-    return url;
+    
+    // Если URL начинается с /
+    if (url.startsWith('/')) {
+      final fullUrl = 'http://185.91.54.146$url';
+      print('Debug: Преобразован URL с /: $fullUrl');
+      return fullUrl;
+    }
+    
+    // Если URL не начинается с /, добавляем его
+    final fullUrl = 'http://185.91.54.146/$url';
+    print('Debug: Преобразован URL без /: $fullUrl');
+    return fullUrl;
   }
 
   Map<String, dynamic> toJson() {

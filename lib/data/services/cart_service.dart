@@ -56,19 +56,12 @@ class CartService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('Debug: Получены данные корзины: $data');
+        
         if (data is List) {
           final List<CartItem> items = data.map((item) {
-            if (item['product'] != null) {
-              return CartItem.fromJson(item);
-            }
-            return CartItem(
-              id: item['id'].toString(),
-              productId: item['product_id'].toString(),
-              name: item['name'],
-              image: item['image'] ?? 'assets/images/bouquet_sample.png',
-              price: double.parse(item['price'].toString()),
-              quantity: item['quantity'] ?? 1,
-            );
+            print('Debug: Обработка элемента корзины: $item');
+            return CartItem.fromJson(item);
           }).toList();
 
           return Cart(

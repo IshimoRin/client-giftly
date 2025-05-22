@@ -45,20 +45,20 @@ class Product {
       
       // Если URL начинается с /media/
       if (url.startsWith('/media/')) {
-        final fullUrl = 'https://185.91.54.146$url';
+        final fullUrl = 'http://185.91.54.146$url';
         print('Debug: Преобразован URL с /media/: $fullUrl');
         return fullUrl;
       }
       
       // Если URL начинается с /
       if (url.startsWith('/')) {
-        final fullUrl = 'https://185.91.54.146$url';
+        final fullUrl = 'http://185.91.54.146$url';
         print('Debug: Преобразован URL с /: $fullUrl');
         return fullUrl;
       }
       
       // Если URL не начинается с /, добавляем его
-      final fullUrl = 'https://185.91.54.146/$url';
+      final fullUrl = 'http://185.91.54.146/$url';
       print('Debug: Преобразован URL без /: $fullUrl');
       return fullUrl;
     }
