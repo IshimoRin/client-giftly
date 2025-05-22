@@ -101,25 +101,7 @@ class ProductService {
   }
 
   // Добавить товар в корзину
-  Future<void> addToCart(Product product, {int quantity = 1}) async {
-    try {
-      await _dio.post(
-        '/cart/add/',
-        data: {
-          'product_id': product.id,
-          'quantity': quantity,
-        },
-      );
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Превышено время ожидания ответа от сервера');
-      }
-      throw Exception('Ошибка при добавлении в корзину: ${e.message}');
-    } catch (e) {
-      throw Exception('Ошибка при добавлении в корзину: $e');
-    }
-  }
+  // Удалён устаревший метод addToCart
 
   // Добавить/удалить товар из избранного
   Future<Product> toggleFavorite(Product product) async {

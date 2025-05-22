@@ -31,7 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      await _authService.register(
+      final user = await _authService.register(
         email: emailController.text,
         password: passwordController.text,
       );
@@ -50,9 +50,15 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Ошибка при регистрации';
+        if (e.toString().contains('manager')) {
+          errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже';
+        } else {
+          errorMessage = e.toString().replaceAll('Exception: ', '');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -95,7 +101,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 const Text(
                   'Email',
                   style: TextStyle(
@@ -175,7 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF91BDE9),
+                    backgroundColor: const Color(0xFF9191E9),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -197,10 +203,21 @@ class _RegisterPageState extends State<RegisterPage> {
                       MaterialPageRoute(builder: (context) => const LoginPage()),
                     );
                   },
-                  child: const Text(
-                    'Уже есть аккаунт? Войти',
-                    style: TextStyle(
-                      color: Colors.black,
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Уже есть аккаунт? ',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                      ),
+                      children: const [
+                        TextSpan(
+                          text: 'Войти',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

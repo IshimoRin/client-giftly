@@ -7,6 +7,8 @@ import 'package:client_giftly/presentation/pages/settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/services/auth_service.dart';
 import 'package:client_giftly/presentation/pages/login_page.dart';
+import '../../../domain/models/order.dart';
+import '../../../data/services/order_service.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -65,11 +67,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'Профиль',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
             fontSize: 28,
+            fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
@@ -461,8 +464,73 @@ class _SettingsContentState extends State<SettingsContent> {
   }
 }
 
-class OrderHistoryContent extends StatelessWidget {
+class OrderHistoryContent extends StatefulWidget {
   const OrderHistoryContent({super.key});
+
+  @override
+  State<OrderHistoryContent> createState() => _OrderHistoryContentState();
+}
+
+class _OrderHistoryContentState extends State<OrderHistoryContent> {
+  final OrderService _orderService = OrderService();
+  List<Order> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      final orders = await _orderService.getUserOrders();
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getStatusText(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Ожидает подтверждения';
+      case OrderStatus.confirmed:
+        return 'Подтвержден';
+      case OrderStatus.processing:
+        return 'В обработке';
+      case OrderStatus.shipping:
+        return 'Доставляется';
+      case OrderStatus.delivered:
+        return 'Доставлен';
+      case OrderStatus.cancelled:
+        return 'Отменен';
+    }
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Colors.orange;
+      case OrderStatus.confirmed:
+        return Colors.blue;
+      case OrderStatus.processing:
+        return Colors.purple;
+      case OrderStatus.shipping:
+        return Colors.indigo;
+      case OrderStatus.delivered:
+        return Colors.green;
+      case OrderStatus.cancelled:
+        return Colors.red;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -484,16 +552,103 @@ class OrderHistoryContent extends StatelessWidget {
           ),
         ),
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 16),
-            // Здесь будет история заказов
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Ошибка при загрузке заказов',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: _loadOrders,
+                        child: const Text('Повторить'),
+                      ),
+                    ],
+                  ),
+                )
+              : _orders.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'У вас пока нет заказов',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _orders.length,
+                      itemBuilder: (context, index) {
+                        final order = _orders[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Заказ #${order.id}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(order.status),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _getStatusText(order.status),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                ...order.items.map((item) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: Text(
+                                        '${item.name} - ${item.quantity} шт.',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    )),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Сумма: ${order.totalAmount.toStringAsFixed(2)} ₽',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Дата: ${order.createdAt.toString().split('.')[0]}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
     );
   }
 }

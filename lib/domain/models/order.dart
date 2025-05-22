@@ -14,8 +14,8 @@ class Order {
   final List<CartItem> items;
   final double totalAmount;
   final OrderStatus status;
-  final String deliveryAddress;
-  final String contactPhone;
+  final String? deliveryAddress;
+  final String? contactPhone;
   final String? comment;
   final DateTime createdAt;
 
@@ -24,26 +24,57 @@ class Order {
     required this.items,
     required this.totalAmount,
     this.status = OrderStatus.pending,
-    required this.deliveryAddress,
-    required this.contactPhone,
+    this.deliveryAddress,
+    this.contactPhone,
     this.comment,
     required this.createdAt,
   });
 
   // Создаем объект из JSON
   factory Order.fromJson(Map<String, dynamic> json) {
+    print('Creating Order from JSON: $json');
+    
+    // Преобразуем строковые значения в числа
+    double parseAmount(dynamic value) {
+      if (value is num) {
+        return value.toDouble();
+      } else if (value is String) {
+        return double.parse(value);
+      }
+      return 0.0;
+    }
+
+    // Преобразуем статус
+    OrderStatus parseStatus(String status) {
+      switch (status.toLowerCase()) {
+        case 'pending':
+          return OrderStatus.pending;
+        case 'confirmed':
+          return OrderStatus.confirmed;
+        case 'processing':
+          return OrderStatus.processing;
+        case 'shipping':
+          return OrderStatus.shipping;
+        case 'delivered':
+          return OrderStatus.delivered;
+        case 'cancelled':
+          return OrderStatus.cancelled;
+        default:
+          return OrderStatus.pending;
+      }
+    }
+
     return Order(
-      id: json['id'] as String?,
-      items: (json['items'] as List<dynamic>)
-          .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      totalAmount: json['total_amount'] as double,
-      status: OrderStatus.values.firstWhere(
-        (e) => e.toString() == 'OrderStatus.${json['status']}',
-        orElse: () => OrderStatus.pending,
-      ),
-      deliveryAddress: json['delivery_address'] as String,
-      contactPhone: json['contact_phone'] as String,
+      id: json['id']?.toString(),
+      items: json['products'] != null 
+          ? (json['products'] as List<dynamic>)
+              .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
+              .toList()
+          : [],
+      totalAmount: parseAmount(json['total_amount']),
+      status: parseStatus(json['status'] as String),
+      deliveryAddress: json['delivery_address'] as String?,
+      contactPhone: json['contact_phone'] as String?,
       comment: json['comment'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -56,9 +87,9 @@ class Order {
       'items': items.map((item) => item.toJson()).toList(),
       'total_amount': totalAmount,
       'status': status.toString().split('.').last,
-      'delivery_address': deliveryAddress,
-      'contact_phone': contactPhone,
-      'comment': comment,
+      if (deliveryAddress != null) 'delivery_address': deliveryAddress,
+      if (contactPhone != null) 'contact_phone': contactPhone,
+      if (comment != null) 'comment': comment,
       'created_at': createdAt.toIso8601String(),
     };
   }

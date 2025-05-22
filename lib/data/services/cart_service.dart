@@ -1,251 +1,255 @@
-import 'package:dio/dio.dart';
-import '../../domain/models/cart_item.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/models/cart.dart';
+import '../../domain/models/cart_item.dart';
+import '../../domain/models/order.dart';
+import 'auth_service.dart';
 
 class CartService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 3),
-  ));
+  final AuthService _authService = AuthService();
 
-  // Получить токен из SharedPreferences
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  // Добавить товар в корзину
-  Future<CartItem> addToCart(String productId, {int quantity = 1}) async {
+  Future<Cart> addToCart(String productId, {int quantity = 1}) async {
     try {
-      final token = await _getToken();
+      final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Требуется авторизация');
       }
 
-      print('Using token for addToCart: $token'); // Для отладки
-      print('Debug: Product ID: $productId');
-      print('Debug: Quantity: $quantity');
-
-      final response = await _dio.post(
-        '/cart/add_item/',
-        data: {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/cart/add_item/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+        body: jsonEncode({
           'product_id': productId,
           'quantity': quantity,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Token $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
+        }),
       );
-      
-      print('Debug: Статус ответа: ${response.statusCode}');
-      print('Debug: Тело ответа: ${response.data}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Получаем первый элемент из списка товаров корзины
-        final cartData = response.data['cart'];
-        if (cartData != null && cartData['items'] != null && cartData['items'].isNotEmpty) {
-          return CartItem.fromJson(cartData['items'][0]);
-        }
-        throw Exception('Товар не был добавлен в корзину');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return Cart.fromJson(data['cart']);
       } else {
-        throw Exception('Не удалось добавить товар в корзину: ${response.statusCode}');
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка при добавлении в корзину');
       }
-    } on DioException catch (e) {
-      print('DioError in addToCart: ${e.message}'); // Для отладки
-      print('Debug: Response data: ${e.response?.data}'); // Добавляем вывод данных ответа
-      if (e.response?.statusCode == 403) {
-        throw Exception('Доступ запрещен. Пожалуйста, войдите в систему заново.');
-      }
-      throw Exception('Ошибка при добавлении в корзину: ${e.message}');
     } catch (e) {
-      print('Error in addToCart: $e'); // Для отладки
       throw Exception('Ошибка при добавлении в корзину: $e');
     }
   }
 
-  // Получить содержимое корзины
-  Future<List<CartItem>> getCart() async {
+  Future<Cart> getCart() async {
     try {
-      final token = await _getToken();
+      final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Требуется авторизация');
       }
 
-      print('Using token: $token'); // Для отладки
-
-      final response = await _dio.get(
-        '/cart/',
-        options: Options(
-          headers: {
-            'Authorization': 'Token $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/cart/get_cart/'),
+        headers: {
+          'Authorization': 'Token $token',
+        },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((item) => CartItem.fromJson(item)).toList();
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          final List<CartItem> items = data.map((item) {
+            if (item['product'] != null) {
+              return CartItem.fromJson(item);
+            }
+            return CartItem(
+              id: item['id'].toString(),
+              productId: item['product_id'].toString(),
+              name: item['name'],
+              image: item['image'] ?? 'assets/images/bouquet_sample.png',
+              price: double.parse(item['price'].toString()),
+              quantity: item['quantity'] ?? 1,
+            );
+          }).toList();
+
+          return Cart(
+            id: 'current',
+            items: items,
+            totalPrice: items.fold<double>(
+              0,
+              (sum, item) => sum + item.totalPrice,
+            ),
+          );
+        }
+        return Cart.fromJson(data);
       } else {
-        throw Exception('Не удалось загрузить корзину: ${response.statusCode}');
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка при получении корзины');
       }
-    } on DioException catch (e) {
-      print('DioError: ${e.message}'); // Для отладки
-      print('Debug: Response data: ${e.response?.data}'); // Добавляем вывод данных ответа
-      if (e.response?.statusCode == 403) {
-        throw Exception('Доступ запрещен. Пожалуйста, войдите в систему заново.');
-      }
-      throw Exception('Ошибка при загрузке корзины: ${e.message}');
     } catch (e) {
-      print('Error: $e'); // Для отладки
-      throw Exception('Ошибка при загрузке корзины: $e');
+      throw Exception('Ошибка при получении корзины: $e');
     }
   }
 
-  // Обновить количество товара в корзине
-  Future<CartItem> updateQuantity(String cartItemId, int quantity) async {
+  Future<Cart> removeFromCart(String productId, {int quantity = 1}) async {
     try {
-      final token = await _getToken();
-      if (token != null && token.isNotEmpty) {
-        _dio.options.headers['Authorization'] = 'Token $token';
-      }
-      final response = await _dio.put(
-        '/cart/update_quantity/',
-        data: {
-          'cart_item_id': cartItemId,
-          'quantity': quantity,
-        },
-      );
-      
-      if (response.statusCode == 200) {
-        return CartItem.fromJson(response.data);
-      }
-      throw Exception('Failed to update cart item');
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Превышено время ожидания ответа от сервера');
-      }
-      throw Exception('Ошибка при обновлении корзины: ${e.message}');
-    } catch (e) {
-      throw Exception('Ошибка при обновлении корзины: $e');
-    }
-  }
-
-  // Удалить товар из корзины
-  Future<void> removeFromCart(String productId) async {
-    try {
-      final token = await _getToken();
+      final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Требуется авторизация');
       }
 
-      print('Using token for removeFromCart: $token'); // Для отладки
-
-      final response = await _dio.post(
-        '/cart/remove_item/',
-        data: {
-          'product_id': productId,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Token $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
+      // Сначала получаем текущую корзину
+      final currentCart = await getCart();
+      final cartItem = currentCart.items.firstWhere(
+        (item) => item.productId == productId,
+        orElse: () => throw Exception('Товар не найден в корзине'),
       );
-      
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Не удалось удалить товар из корзины: ${response.statusCode}');
+
+      // Проверяем, не пытаемся ли мы удалить больше товаров, чем есть в корзине
+      if (quantity > cartItem.quantity) {
+        throw Exception('Нельзя удалить больше товаров, чем есть в корзине');
       }
-    } on DioException catch (e) {
-      print('DioError in removeFromCart: ${e.message}'); // Для отладки
-      print('Debug: Response data: ${e.response?.data}'); // Добавляем вывод данных ответа
-      if (e.response?.statusCode == 403) {
-        throw Exception('Доступ запрещен. Пожалуйста, войдите в систему заново.');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/cart/remove_item/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+        body: jsonEncode({
+          'product_id': productId,
+          'quantity': quantity,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return Cart.fromJson(data['cart']);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка при удалении из корзины');
       }
-      throw Exception('Ошибка при удалении из корзины: ${e.message}');
     } catch (e) {
-      print('Error in removeFromCart: $e'); // Для отладки
       throw Exception('Ошибка при удалении из корзины: $e');
     }
   }
 
-  // Очистить корзину
   Future<void> clearCart() async {
     try {
-      final token = await _getToken();
+      final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Требуется авторизация');
       }
 
-      final response = await _dio.delete(
-        '/cart/clear/',
-        options: Options(
-          headers: {
-            'Authorization': 'Token $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/cart/clear_cart/'),
+        headers: {
+          'Authorization': 'Token $token',
+        },
       );
-      
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Не удалось очистить корзину: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка при очистке корзины');
       }
-    } on DioException catch (e) {
-      print('DioError in clearCart: ${e.message}'); // Для отладки
-      print('Debug: Response data: ${e.response?.data}'); // Добавляем вывод данных ответа
-      if (e.response?.statusCode == 403) {
-        throw Exception('Доступ запрещен. Пожалуйста, войдите в систему заново.');
-      }
-      throw Exception('Ошибка при очистке корзины: ${e.message}');
     } catch (e) {
-      print('Error in clearCart: $e'); // Для отладки
       throw Exception('Ошибка при очистке корзины: $e');
     }
   }
 
-  // Оформить заказ
-  Future<Map<String, dynamic>> checkout({
-    required String address,
-    required String phone,
+  Future<Order> createOrder({
+    required String deliveryAddress,
+    required String contactPhone,
     String? comment,
   }) async {
+    final token = await _authService.getToken();
+    if (token == null) {
+      throw Exception('Необходима авторизация');
+    }
+
+    // Проверяем, что в корзине есть товары
+    final cart = await getCart();
+    if (cart.items.isEmpty) {
+      throw Exception('Корзина пуста. Добавьте товары перед оформлением заказа.');
+    }
+
+    // Создаем заказ из корзины
+    final requestBody = {
+      'delivery_address': deliveryAddress,
+      'contact_phone': contactPhone,
+      if (comment != null) 'comment': comment,
+      'total_amount': cart.totalPrice.toString(),
+      'status': 'pending',
+    };
+
+    print('Request body: ${jsonEncode(requestBody)}');
+
     try {
-      final token = await _getToken();
-      if (token != null && token.isNotEmpty) {
-        _dio.options.headers['Authorization'] = 'Token $token';
-      }
-      final response = await _dio.post(
-        '/orders/create/',
-        data: {
-          'address': address,
-          'phone': phone,
-          'comment': comment,
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/orders/create_from_cart/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
         },
+        body: jsonEncode(requestBody),
       );
-      
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data;
+
+      print('Response status: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        try {
+          final jsonData = jsonDecode(response.body);
+          print('Parsed JSON data: $jsonData');
+          
+          // Преобразуем строковые значения в числа
+          if (jsonData['order'] != null) {
+            final orderData = jsonData['order'];
+            // Безопасное преобразование total_amount
+            if (orderData['total_amount'] != null) {
+              if (orderData['total_amount'] is String) {
+                orderData['total_amount'] = double.parse(orderData['total_amount']);
+              } else if (orderData['total_amount'] is int) {
+                orderData['total_amount'] = orderData['total_amount'].toDouble();
+              }
+            }
+            
+            // Безопасное преобразование цен товаров
+            if (orderData['products'] != null) {
+              for (var product in orderData['products']) {
+                if (product['price'] != null) {
+                  if (product['price'] is String) {
+                    product['price'] = double.parse(product['price']);
+                  } else if (product['price'] is int) {
+                    product['price'] = product['price'].toDouble();
+                  }
+                }
+              }
+            }
+          }
+          
+          return Order.fromJson(jsonData['order']);
+        } catch (e) {
+          print('Error parsing response: $e');
+          print('Raw response body: ${response.body}');
+          throw Exception('Ошибка при обработке ответа сервера: $e');
+        }
+      } else if (response.statusCode == 500) {
+        throw Exception('Ошибка сервера при создании заказа. Пожалуйста, попробуйте позже.');
+      } else {
+        try {
+          final error = jsonDecode(response.body);
+          throw Exception(error['error'] ?? 'Ошибка при создании заказа: ${response.body}');
+        } catch (e) {
+          print('Error parsing error response: $e');
+          throw Exception('Ошибка при создании заказа. Пожалуйста, попробуйте позже.');
+        }
       }
-      throw Exception('Failed to create order');
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Превышено время ожидания ответа от сервера');
-      }
-      throw Exception('Ошибка при оформлении заказа: ${e.message}');
     } catch (e) {
-      throw Exception('Ошибка при оформлении заказа: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Ошибка при создании заказа: $e');
     }
   }
 } 

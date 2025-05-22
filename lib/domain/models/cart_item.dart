@@ -28,7 +28,7 @@ class CartItem {
         id: json['id'].toString(),
         productId: product['id'].toString(),
         name: product['name'],
-        image: product['image'] ?? 'assets/images/bouquet_sample.png',
+        image: _getValidImageUrl(product['image']),
         price: double.parse(product['price'].toString()),
         quantity: json['quantity'] ?? 1,
       );
@@ -39,10 +39,24 @@ class CartItem {
       id: json['id'].toString(),
       productId: json['product_id'].toString(),
       name: json['name'],
-      image: json['image'] ?? 'assets/images/bouquet_sample.png',
+      image: _getValidImageUrl(json['image']),
       price: double.parse(json['price'].toString()),
       quantity: json['quantity'] ?? 1,
     );
+  }
+
+  static String _getValidImageUrl(dynamic imageUrl) {
+    if (imageUrl == null || imageUrl.toString().isEmpty) {
+      return 'assets/images/bouquet_sample.png';
+    }
+    final url = imageUrl.toString();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/')) {
+      return url.substring(1);
+    }
+    return url;
   }
 
   Map<String, dynamic> toJson() {

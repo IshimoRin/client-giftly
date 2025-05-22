@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../domain/models/user.dart';
 
 class HelperPage extends StatefulWidget {
-  const HelperPage({Key? key}) : super(key: key);
+  final User? user;
+  
+  const HelperPage({
+    Key? key,
+    this.user,
+  }) : super(key: key);
 
   @override
   _HelperPageState createState() => _HelperPageState();
@@ -13,7 +19,6 @@ class _HelperPageState extends State<HelperPage> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
-  
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty || _isLoading) return;
@@ -55,7 +60,6 @@ class _HelperPageState extends State<HelperPage> {
         _isLoading = false;
       });
     } else {
-      // не удалось получить если
       setState(() {
         _messages.add(
           ChatMessage(

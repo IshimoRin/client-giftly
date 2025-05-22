@@ -10,6 +10,7 @@ import 'package:client_giftly/presentation/widgets/bottom_nav_bar.dart';
 import 'package:client_giftly/domain/models/user_role.dart';
 import 'package:client_giftly/domain/models/user.dart';
 import 'package:client_giftly/data/services/product_service.dart';
+import 'package:client_giftly/data/services/cart_service.dart';
 import 'package:client_giftly/domain/models/product.dart';
 import 'package:client_giftly/presentation/widgets/product_card.dart';
 
@@ -28,6 +29,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late User _currentUser;
   int _selectedIndex = 0;
+  final GlobalKey<CartPageState> _cartPageKey = GlobalKey<CartPageState>();
 
   @override
   void initState() {
@@ -48,10 +50,14 @@ class _HomePageState extends State<HomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          _MainContent(),
+          _MainContent(onCartUpdated: () {
+            _cartPageKey.currentState?.updateCart();
+          }),
           HelperPage(),
-          FavoritePage(user: _currentUser),
-          CartPage(user: _currentUser),
+          FavoritePage(user: _currentUser, onCartUpdated: () {
+            _cartPageKey.currentState?.updateCart();
+          }),
+          CartPage(key: _cartPageKey, user: _currentUser),
           ProfilePage(
             user: _currentUser,
             onUserUpdated: _updateUser,
@@ -95,12 +101,20 @@ class _HomePageState extends State<HomePage> {
 
 // Выносим главный контент в отдельный виджет
 class _MainContent extends StatefulWidget {
+  final VoidCallback onCartUpdated;
+
+  const _MainContent({
+    Key? key,
+    required this.onCartUpdated,
+  }) : super(key: key);
+
   @override
   State<_MainContent> createState() => _MainContentState();
 }
 
 class _MainContentState extends State<_MainContent> {
   final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
   List<Product> _allProducts = [];
   bool _isLoading = true;
   String? _error;
@@ -169,6 +183,30 @@ class _MainContentState extends State<_MainContent> {
         _allProducts[index] = product.copyWith(isFavorite: isFavorite);
       }
     });
+  }
+
+  Future<void> _addToCart(Product product) async {
+    try {
+      final cart = await _cartService.addToCart(product.id);
+      if (mounted) {
+        widget.onCartUpdated(); // Обновляем корзину
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар добавлен в корзину'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при добавлении в корзину: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -361,35 +399,28 @@ class _MainContentState extends State<_MainContent> {
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Изображение продукта с кнопкой избранного
           Stack(
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: product.image.isNotEmpty
-                      ? Image.network(
-                          product.image,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              'assets/images/bouquet_sample.png',
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        )
-                      : Image.asset(
-                          'assets/images/bouquet_sample.png',
-                          fit: BoxFit.cover,
-                        ),
+                child: Image.network(
+                  product.image,
+                  width: double.infinity,
+                  height: 120,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/bouquet_sample.png',
+                      width: double.infinity,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
-              // Кнопка избранного
               Positioned(
                 top: 8,
                 right: 8,
@@ -406,26 +437,26 @@ class _MainContentState extends State<_MainContent> {
                           }
                         });
                         if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  updatedProduct.isFavorite 
-                                    ? 'Товар добавлен в избранное'
-                                    : 'Товар удален из избранного'
-                                ),
-                                backgroundColor: Colors.green,
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                updatedProduct.isFavorite 
+                                  ? 'Товар добавлен в избранное'
+                                  : 'Товар удален из избранного'
                               ),
-                            );
-                          }
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
                       } catch (e) {
                         if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Ошибка при обновлении избранного: ${e.toString()}'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Ошибка при обновлении избранного: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     borderRadius: BorderRadius.circular(20),
@@ -435,12 +466,12 @@ class _MainContentState extends State<_MainContent> {
                         color: Colors.white.withOpacity(0.9),
                         shape: BoxShape.circle,
                         boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         product.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -453,7 +484,6 @@ class _MainContentState extends State<_MainContent> {
               ),
             ],
           ),
-          // Информация о продукте
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(6.0),
@@ -462,58 +492,35 @@ class _MainContentState extends State<_MainContent> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                          Text(
-                            product.name,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${product.price.toStringAsFixed(0)} ₽',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                      ]
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${product.price.toStringAsFixed(0)} ₽',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  
-                  // Кнопка "В корзину"
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          await _productService.addToCart(product);
-                          if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Товар добавлен в корзину'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                        } catch (e) {
-                          if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Ошибка при добавлении в корзину: ${e.toString()}'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                        }
-                      },
+                      onPressed: () => _addToCart(product),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF91BDE9),
+                        backgroundColor: const Color(0xFF91BDE9),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 3),
                         shape: RoundedRectangleBorder(

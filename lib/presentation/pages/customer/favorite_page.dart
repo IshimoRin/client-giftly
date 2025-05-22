@@ -4,14 +4,17 @@ import '../../../domain/models/user.dart';
 import '../../../domain/models/user_role.dart';
 import '../../widgets/login_prompt.dart';
 import '../../../data/services/product_service.dart';
+import '../../../data/services/cart_service.dart';
 import '../../../domain/models/product.dart';
 
 class FavoritePage extends StatefulWidget {
   final User user;
+  final VoidCallback onCartUpdated;
 
   const FavoritePage({
     super.key,
     required this.user,
+    required this.onCartUpdated,
   });
 
   @override
@@ -20,7 +23,10 @@ class FavoritePage extends StatefulWidget {
 
 class _FavoritePageState extends State<FavoritePage> {
   final ProductService _productService = ProductService();
-  late Future<List<Product>> _favoritesFuture;
+  final CartService _cartService = CartService();
+  List<Product> _favorites = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -28,16 +34,30 @@ class _FavoritePageState extends State<FavoritePage> {
     _loadFavorites();
   }
 
-  void _loadFavorites() {
-    _favoritesFuture = _productService.getFavorites();
+  Future<void> _loadFavorites() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final favorites = await _productService.getFavorites();
+      setState(() {
+        _favorites = favorites;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _removeFromFavorites(Product product) async {
     try {
       await _productService.removeFromFavorites(product.id);
-      setState(() {
-        _loadFavorites();
-      });
+      _loadFavorites();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -60,8 +80,9 @@ class _FavoritePageState extends State<FavoritePage> {
 
   Future<void> _addToCart(Product product) async {
     try {
-      await _productService.addToCart(product);
+      final cart = await _cartService.addToCart(product.id);
       if (mounted) {
+        widget.onCartUpdated();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Товар добавлен в корзину'),
@@ -83,150 +104,130 @@ class _FavoritePageState extends State<FavoritePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Избранное',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-          ),
-        ),
-      ),
-      body: widget.user.role == UserRole.guest
-          ? const LoginPrompt(
-              message: 'Войдите или зарегистрируйтесь, чтобы добавлять товары в избранное',
-            )
-          : FutureBuilder<List<Product>>(
-              future: _favoritesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadFavorites,
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_favorites.isEmpty) {
+      return const Center(
+        child: Text(
+          'В избранном пока ничего нет',
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _favorites.length,
+      itemBuilder: (context, index) {
+        final product = _favorites[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                    child: Image.network(
+                      product.image,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.favorite,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => _removeFromFavorites(product),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      product.description,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Произошла ошибка при загрузке избранного'),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _loadFavorites();
-                            });
-                          },
-                          child: const Text('Повторить'),
+                        Text(
+                          '${product.price.toStringAsFixed(0)} ₽',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF91BDE9),
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => _addToCart(product),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF91BDE9),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('В корзину'),
+                          ),
                         ),
                       ],
                     ),
-                  );
-                }
-
-                final favorites = snapshot.data ?? [];
-
-                if (favorites.isEmpty) {
-                  return const Center(
-                    child: Text('В избранном пока ничего нет'),
-                  );
-                }
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: favorites.length,
-                  itemBuilder: (context, index) {
-                    final product = favorites[index];
-                    return Card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Stack(
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 1,
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(12),
-                                  ),
-                                  child: Image.network(
-                                    product.image,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Image.asset(
-                                        'assets/images/bouquet_sample.png',
-                                        fit: BoxFit.cover,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  color: Colors.red,
-                                  onPressed: () => _removeFromFavorites(product),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${product.price.toStringAsFixed(0)} ₽',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () => _addToCart(product),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF91BDE9),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text('В корзину'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

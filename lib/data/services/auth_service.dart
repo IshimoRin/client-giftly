@@ -210,28 +210,38 @@ class AuthService {
         final data = jsonDecode(response.body);
         final prefs = await SharedPreferences.getInstance();
         
+        // Безопасное получение значений с проверкой на null
+        final firstName = data['first_name']?.toString() ?? '';
+        final lastName = data['last_name']?.toString() ?? '';
+        final fullName = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+        final email = data['email']?.toString() ?? '';
+        final phone = data['phone']?.toString() ?? '';
+        final birthDateStr = data['birth_date']?.toString();
+        
         // Обновляем сохраненные данные
-        final fullName = '${data['first_name'] ?? ''} ${data['last_name'] ?? ''}'.trim();
         await prefs.setString('user_name', fullName);
-        await prefs.setString('user_phone', data['phone'] ?? '');
-        if (data['birth_date'] != null) {
-          await prefs.setString('user_birth_date', data['birth_date']);
+        await prefs.setString('user_phone', phone);
+        if (birthDateStr != null) {
+          await prefs.setString('user_birth_date', birthDateStr);
         }
         
         // Создаем обновленного пользователя
         return User(
-          id: userId, // Используем переданный userId
-          email: data['email'] ?? '',
+          id: userId,
+          email: email,
           name: fullName,
-          role: UserRole.customer, // Используем текущую роль
-          phone: data['phone'] ?? '',
-          birthDate: data['birth_date'] != null ? DateTime.tryParse(data['birth_date']) : null,
+          role: UserRole.customer,
+          phone: phone,
+          birthDate: birthDateStr != null ? DateTime.tryParse(birthDateStr) : null,
         );
       } else {
         // Если сервер вернул ошибку, пробуем получить текст ошибки
         try {
           final errorData = jsonDecode(response.body);
-          throw Exception(errorData['error'] ?? 'Ошибка обновления профиля');
+          final errorMessage = errorData['error']?.toString() ?? 
+                             errorData['detail']?.toString() ?? 
+                             'Ошибка обновления профиля';
+          throw Exception(errorMessage);
         } catch (_) {
           throw Exception('Ошибка обновления профиля: ${response.statusCode}');
         }
@@ -242,11 +252,12 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> register({
+  Future<User> register({
     required String email,
     required String password,
   }) async {
     try {
+      print('Debug: Отправляем запрос на регистрацию для email: $email');
       final response = await http.post(
         Uri.parse(ApiConfig.registerUrl),
         headers: {
@@ -258,18 +269,59 @@ class AuthService {
           'role': 'buyer',
         }),
       ).timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 10),
         onTimeout: () {
           throw TimeoutException('Превышено время ожидания ответа от сервера');
         },
       );
 
+      print('Debug: Статус ответа: ${response.statusCode}');
+      print('Debug: Тело ответа: ${response.body}');
+
       if (response.statusCode == 201) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final userData = data['user'];
+        
+        if (userData == null) {
+          throw Exception('Ошибка: сервер не вернул данные пользователя');
+        }
+
+        final userId = userData['id']?.toString();
+        if (userId == null || userId.isEmpty) {
+          throw Exception('Ошибка: сервер не вернул идентификатор пользователя');
+        }
+
+        final token = data['token'];
+        if (token == null || token.isEmpty) {
+          throw Exception('Ошибка: сервер не вернул токен авторизации');
+        }
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setString('user_id', userId);
+        await prefs.setString('user_email', userData['email'] ?? email);
+        await prefs.setString('user_role', 'buyer');
+        
+        final user = User(
+          id: userId,
+          email: userData['email'] ?? email,
+          name: '',
+          role: UserRole.customer,
+          phone: '',
+          birthDate: null,
+        );
+
+        return user;
       } else {
-        throw Exception('Ошибка регистрации: ${response.body}');
+        try {
+          final errorData = jsonDecode(response.body);
+          throw Exception(errorData['error'] ?? errorData['detail'] ?? 'Ошибка регистрации: ${response.statusCode}');
+        } catch (_) {
+          throw Exception('Ошибка регистрации: ${response.statusCode}');
+        }
       }
     } catch (e) {
+      print('Debug: Ошибка при регистрации: $e');
       throw Exception('Ошибка при регистрации: $e');
     }
   }
