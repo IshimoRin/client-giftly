@@ -8,7 +8,12 @@ import '../../domain/models/user_role.dart';
 import '../../data/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Function(User)? onLoginSuccess;
+
+  const LoginPage({
+    super.key,
+    this.onLoginSuccess,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -22,20 +27,23 @@ class _LoginPageState extends State<LoginPage> {
   bool _isSellerLogin = false;
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        final authService = AuthService();
-        final user = await authService.login(
-          email: emailController.text,
-          password: passwordController.text,
-          role: _isSellerLogin ? UserRole.seller : UserRole.customer,
-        );
+    setState(() {
+      _isLoading = true;
+    });
 
-        if (mounted) {
+    try {
+      final user = await AuthService().login(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        role: _isSellerLogin ? UserRole.seller : UserRole.customer,
+      );
+
+      if (mounted) {
+        if (widget.onLoginSuccess != null) {
+          widget.onLoginSuccess!(user);
+        } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -43,18 +51,28 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ошибка: $e')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Вход выполнен успешно'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

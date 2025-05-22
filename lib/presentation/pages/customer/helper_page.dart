@@ -72,11 +72,12 @@ class _HelperPageState extends State<HelperPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           'Помощник',
           style: TextStyle(
             fontFamily: 'Inter',
-            fontSize: 32,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
         ),

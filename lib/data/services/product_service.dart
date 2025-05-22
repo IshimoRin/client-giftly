@@ -3,71 +3,53 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../domain/models/product.dart';
 import '../../config/api_config.dart';
+import 'package:dio/dio.dart';
 
 class ProductService {
+  final _dio = Dio(BaseOptions(
+    baseUrl: ApiConfig.baseUrl,
+    connectTimeout: const Duration(seconds: 5),
+    receiveTimeout: const Duration(seconds: 3),
+  ));
+
   // Получить список товаров
   Future<List<Product>> getProducts() async {
     try {
-      print('Fetching products from: ${ApiConfig.productsUrl}');
-      
-      final response = await http.get(
-        Uri.parse(ApiConfig.productsUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания ответа от сервера');
-        },
-      );
-
-      print('Response status code: ${response.statusCode}');
-      print('Response headers: ${response.headers}');
-      print('Response body: ${response.body}');
-
+      final response = await _dio.get('/products/');
       if (response.statusCode == 200) {
-        try {
-          final List<dynamic> data = jsonDecode(response.body);
-          return data.map((json) => Product.fromJson(json)).toList();
-        } catch (e) {
-          print('Error parsing JSON: $e');
-          throw Exception('Ошибка при обработке данных: $e');
-        }
-      } else {
-        print('Error response: ${response.body}');
-        throw Exception('Ошибка получения товаров: ${response.body}');
+        final List<dynamic> data = response.data;
+        return data.map((json) => Product.fromJson(json)).toList();
       }
+      throw Exception('Failed to load products');
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Превышено время ожидания ответа от сервера');
+      }
+      throw Exception('Ошибка при загрузке товаров: ${e.message}');
     } catch (e) {
-      print('Error in getProducts: $e');
-      throw Exception('Ошибка при получении товаров: $e');
+      throw Exception('Ошибка при загрузке товаров: $e');
     }
   }
 
   // Получить список избранных товаров
   Future<List<Product>> getFavorites() async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.favoritesUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      ).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания ответа от сервера');
-        },
-      );
-
+      final response = await _dio.get('/favorites/');
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => Product.fromJson(json)).toList();
-      } else {
-        throw Exception('Не удалось загрузить избранное: ${response.body}');
+        final List<dynamic> data = response.data;
+        // Извлекаем продукты из вложенных объектов
+        return data.map((json) => Product.fromJson(json['product'])).toList();
       }
+      throw Exception('Failed to load favorites');
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Превышено время ожидания ответа от сервера');
+      }
+      throw Exception('Ошибка при загрузке избранного: ${e.message}');
     } catch (e) {
-      throw Exception('Ошибка: $e');
+      throw Exception('Ошибка при загрузке избранного: $e');
     }
   }
 
@@ -119,29 +101,48 @@ class ProductService {
   }
 
   // Добавить товар в корзину
-  Future<void> addToCart(String productId, {int quantity = 1}) async {
+  Future<void> addToCart(Product product, {int quantity = 1}) async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.cartUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'product_id': productId,
+      await _dio.post(
+        '/cart/add/',
+        data: {
+          'product_id': product.id,
           'quantity': quantity,
-        }),
-      ).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания ответа от сервера');
         },
       );
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Не удалось добавить в корзину: ${response.body}');
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Превышено время ожидания ответа от сервера');
       }
+      throw Exception('Ошибка при добавлении в корзину: ${e.message}');
     } catch (e) {
-      throw Exception('Ошибка: $e');
+      throw Exception('Ошибка при добавлении в корзину: $e');
+    }
+  }
+
+  // Добавить/удалить товар из избранного
+  Future<Product> toggleFavorite(Product product) async {
+    try {
+      final response = await _dio.post(
+        '/products/${product.id}/toggle_favorite/',
+      );
+      
+      if (response.statusCode == 200) {
+        // Возвращаем копию продукта с обновленным статусом избранного
+        return product.copyWith(
+          isFavorite: response.data['status'] == 'added to favorites'
+        );
+      }
+      throw Exception('Failed to toggle favorite');
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Превышено время ожидания ответа от сервера');
+      }
+      throw Exception('Ошибка при обновлении избранного: ${e.message}');
+    } catch (e) {
+      throw Exception('Ошибка при обновлении избранного: $e');
     }
   }
 } 

@@ -8,12 +8,16 @@ class AboutAppPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'О приложении',
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 32,
+            fontSize: 28,
           ),
         ),
       ),

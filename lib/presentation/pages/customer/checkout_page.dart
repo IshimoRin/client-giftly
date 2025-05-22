@@ -94,7 +94,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.bold,
-            fontSize: 32,
+            fontSize: 28,
           ),
         ),
       ),

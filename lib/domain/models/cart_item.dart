@@ -1,47 +1,76 @@
 import 'product.dart';
 
 class CartItem {
-  final Product product;
+  final String id;
+  final String productId;
+  final String name;
+  final String image;
+  final double price;
   final int quantity;
-  final String? note;  // Опциональное примечание к товару
 
   const CartItem({
-    required this.product,
+    required this.id,
+    required this.productId,
+    required this.name,
+    required this.image,
+    required this.price,
     required this.quantity,
-    this.note,
   });
 
   // Получить общую стоимость позиции
-  double get totalPrice => product.price * quantity;
+  double get totalPrice => price * quantity;
 
-  // Создаем объект из JSON
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    // Если json содержит вложенный объект product
+    if (json['product'] != null) {
+      final product = json['product'];
+      return CartItem(
+        id: json['id'].toString(),
+        productId: product['id'].toString(),
+        name: product['name'],
+        image: product['image'] ?? 'assets/images/bouquet_sample.png',
+        price: double.parse(product['price'].toString()),
+        quantity: json['quantity'] ?? 1,
+      );
+    }
+    
+    // Если json содержит прямые поля
     return CartItem(
-      product: Product.fromJson(json['product'] as Map<String, dynamic>),
-      quantity: json['quantity'] as int,
-      note: json['note'] as String?,
+      id: json['id'].toString(),
+      productId: json['product_id'].toString(),
+      name: json['name'],
+      image: json['image'] ?? 'assets/images/bouquet_sample.png',
+      price: double.parse(json['price'].toString()),
+      quantity: json['quantity'] ?? 1,
     );
   }
 
-  // Преобразуем объект в JSON
   Map<String, dynamic> toJson() {
     return {
-      'product': product.toJson(),
+      'id': id,
+      'product_id': productId,
+      'name': name,
+      'image': image,
+      'price': price,
       'quantity': quantity,
-      'note': note,
     };
   }
 
-  // Создаем копию с новыми значениями
   CartItem copyWith({
-    Product? product,
+    String? id,
+    String? productId,
+    String? name,
+    String? image,
+    double? price,
     int? quantity,
-    String? note,
   }) {
     return CartItem(
-      product: product ?? this.product,
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      name: name ?? this.name,
+      image: image ?? this.image,
+      price: price ?? this.price,
       quantity: quantity ?? this.quantity,
-      note: note ?? this.note,
     );
   }
 } 

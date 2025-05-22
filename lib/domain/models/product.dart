@@ -29,7 +29,7 @@ class Product {
 
     return Product(
       id: json['id'].toString(),
-      name: json['name'],
+      name: json['name'] ?? '',
       description: json['description'] ?? '',
       price: parsePrice(json['price']),
       image: json['image'] ?? '',

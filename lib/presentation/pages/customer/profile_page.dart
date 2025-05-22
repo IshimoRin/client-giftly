@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/user.dart';
 import '../../../domain/models/user_role.dart';
 import '../../widgets/login_prompt.dart';
-import 'package:giftly/presentation/pages/about_app_page.dart';
-import 'package:giftly/presentation/pages/settings_page.dart';
+import 'package:client_giftly/presentation/pages/about_app_page.dart';
+import 'package:client_giftly/presentation/pages/settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/services/auth_service.dart';
+import 'package:client_giftly/presentation/pages/login_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -62,27 +63,43 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    if (_currentContent != null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _navigateBack,
-          ),
-          title: Text(
-            _currentContent is PersonalDataContent ? 'Личные данные' : 'Профиль',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        body: _currentContent,
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Профиль'),
+        title: const Text(
+          'Профиль',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              try {
+                await AuthService().logout();
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Ошибка при выходе: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+        ],
       ),
-      body: _buildMainContent(context),
+      body: _currentContent ?? _buildMainContent(context),
     );
   }
 
@@ -285,142 +302,161 @@ class _SettingsContentState extends State<SettingsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Тема приложения
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Внешний вид',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Настройки',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Тема приложения
+          Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Внешний вид',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              SwitchListTile(
-                title: const Text('Тёмная тема'),
-                subtitle: Text(_isDarkMode ? 'Включена' : 'Выключена'),
-                value: _isDarkMode,
-                onChanged: (value) {
-                  setState(() {
-                    _isDarkMode = value;
-                  });
-                },
-              ),
-              ListTile(
-                title: const Text('Размер текста'),
-                subtitle: Slider(
-                  value: _fontSize,
-                  min: 12,
-                  max: 24,
-                  divisions: 4,
-                  label: '${_fontSize.round()}',
+                SwitchListTile(
+                  title: const Text('Тёмная тема'),
+                  subtitle: Text(_isDarkMode ? 'Включена' : 'Выключена'),
+                  value: _isDarkMode,
                   onChanged: (value) {
                     setState(() {
-                      _fontSize = value;
+                      _isDarkMode = value;
                     });
                   },
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Уведомления
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Уведомления',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                ListTile(
+                  title: const Text('Размер текста'),
+                  subtitle: Slider(
+                    value: _fontSize,
+                    min: 12,
+                    max: 24,
+                    divisions: 4,
+                    label: '${_fontSize.round()}',
+                    onChanged: (value) {
+                      setState(() {
+                        _fontSize = value;
+                      });
+                    },
                   ),
                 ),
-              ),
-              SwitchListTile(
-                title: const Text('Push-уведомления'),
-                subtitle: const Text('Уведомления о заказах и акциях'),
-                value: _notificationsEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _notificationsEnabled = value;
-                  });
-                },
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        // Язык
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Язык',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          // Уведомления
+          Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Уведомления',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              RadioListTile<String>(
-                title: const Text('Русский'),
-                value: 'Русский',
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('English'),
-                value: 'English',
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
-                },
-              ),
-            ],
+                SwitchListTile(
+                  title: const Text('Push-уведомления'),
+                  subtitle: const Text('Уведомления о заказах и акциях'),
+                  value: _notificationsEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _notificationsEnabled = value;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        // Кнопка сохранения
-        ElevatedButton(
-          onPressed: () {
-            // TODO: Сохранить настройки
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Настройки сохранены'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF9191E9),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+          // Язык
+          Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Язык',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                RadioListTile<String>(
+                  title: const Text('Русский'),
+                  value: 'Русский',
+                  groupValue: _selectedLanguage,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedLanguage = value!;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('English'),
+                  value: 'English',
+                  groupValue: _selectedLanguage,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedLanguage = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-          child: const Text('Сохранить настройки'),
-        ),
-      ],
+          const SizedBox(height: 16),
+
+          // Кнопка сохранения
+          ElevatedButton(
+            onPressed: () {
+              // TODO: Сохранить настройки
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Настройки сохранены'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9191E9),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: const Text('Сохранить настройки'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -430,14 +466,33 @@ class OrderHistoryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будет история заказов
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'История заказов',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            // Здесь будет история заказов
+          ],
+        ),
       ),
     );
   }
@@ -506,11 +561,15 @@ class _PersonalDataContentState extends State<PersonalDataContent> {
     });
 
     try {
+      if (widget.user.id.isEmpty) {
+        throw Exception('Ошибка: не удалось определить пользователя. Попробуйте выйти и войти снова.');
+      }
+
       final updatedUser = await AuthService().updateProfile(
         userId: widget.user.id,
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        phone: _phoneController.text,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        phone: _phoneController.text.trim(),
         birthDate: _birthDate,
       );
 
@@ -543,154 +602,173 @@ class _PersonalDataContentState extends State<PersonalDataContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Имя',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Личные данные',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Имя',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _firstNameController,
-              decoration: InputDecoration(
-                hintText: 'Введите имя',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _firstNameController,
+                decoration: InputDecoration(
+                  hintText: 'Введите имя',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Фамилия',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 20),
+              const Text(
+                'Фамилия',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _lastNameController,
-              decoration: InputDecoration(
-                hintText: 'Введите фамилию',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _lastNameController,
+                decoration: InputDecoration(
+                  hintText: 'Введите фамилию',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Телефон',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 20),
+              const Text(
+                'Телефон',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                hintText: 'Введите номер телефона',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Введите номер телефона',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Дата рождения',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () => _selectDate(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.grey.shade50,
+              const SizedBox(height: 20),
+              const Text(
+                'Дата рождения',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _birthDate != null
-                          ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
-                          : 'Выберите дату',
-                      style: TextStyle(
-                        color: _birthDate != null ? Colors.black : Colors.grey,
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _birthDate != null
+                            ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
+                            : 'Выберите дату',
+                        style: TextStyle(
+                          color: _birthDate != null ? Colors.black : Colors.grey,
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.calendar_today, color: Colors.grey),
-                  ],
+                      const Icon(Icons.calendar_today, color: Colors.grey),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF91BDE9),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _saveData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF91BDE9),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Сохранить',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'Сохранить',
-                      style: TextStyle(fontSize: 16),
-                    ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -702,14 +780,33 @@ class LegalDocsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будут правовые документы
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Правовые документы',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            // Здесь будут правовые документы
+          ],
+        ),
       ),
     );
   }
@@ -720,14 +817,33 @@ class ReturnPolicyContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будет информация о возврате
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'О возврате товара',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            // Здесь будет информация о возврате
+          ],
+        ),
       ),
     );
   }
@@ -738,14 +854,33 @@ class SupportContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будет поддержка
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Поддержка Gifty',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            // Здесь будет поддержка
+          ],
+        ),
       ),
     );
   }
@@ -756,14 +891,33 @@ class BecomeSellerContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          // Здесь будет информация о том, как стать продавцом
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Как стать продавцом',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            // Здесь будет информация о том, как стать продавцом
+          ],
+        ),
       ),
     );
   }
@@ -774,18 +928,37 @@ class AboutAppContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16),
-          Text('Версия: 1.0.0'),
-          SizedBox(height: 8),
-          Text('Команда: Giftly'),
-          SizedBox(height: 8),
-          Text('Дата: 16.05.2025'),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'О приложении',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+        ),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            Text('Версия: 1.0.0'),
+            SizedBox(height: 8),
+            Text('Команда: Giftly'),
+            SizedBox(height: 8),
+            Text('Дата: 16.05.2025'),
+          ],
+        ),
       ),
     );
   }

@@ -32,38 +32,50 @@ class _FavoritePageState extends State<FavoritePage> {
     _favoritesFuture = _productService.getFavorites();
   }
 
-  Future<void> _removeFromFavorites(String productId) async {
+  Future<void> _removeFromFavorites(Product product) async {
     try {
-      await _productService.removeFromFavorites(productId);
+      await _productService.removeFromFavorites(product.id);
       setState(() {
         _loadFavorites();
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Товар удален из избранного')),
+          const SnackBar(
+            content: Text('Товар удален из избранного'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
+          SnackBar(
+            content: Text('Ошибка при удалении из избранного: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
-  Future<void> _addToCart(String productId) async {
+  Future<void> _addToCart(Product product) async {
     try {
-      await _productService.addToCart(productId);
+      await _productService.addToCart(product);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Товар добавлен в корзину')),
+          const SnackBar(
+            content: Text('Товар добавлен в корзину'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
+          SnackBar(
+            content: Text('Ошибка при добавлении в корзину: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -136,17 +148,36 @@ class _FavoritePageState extends State<FavoritePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          AspectRatio(
-                            aspectRatio: 1,
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(12),
+                          Stack(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: 1,
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(12),
+                                  ),
+                                  child: Image.network(
+                                    product.image,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        'assets/images/bouquet_sample.png',
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
-                              child: Image.network(
-                                product.image,
-                                fit: BoxFit.cover,
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  color: Colors.red,
+                                  onPressed: () => _removeFromFavorites(product),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -168,6 +199,22 @@ class _FavoritePageState extends State<FavoritePage> {
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () => _addToCart(product),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF91BDE9),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('В корзину'),
                                   ),
                                 ),
                               ],

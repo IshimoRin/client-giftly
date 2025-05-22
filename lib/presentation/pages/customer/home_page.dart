@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:giftly/presentation/pages/customer/cart_page.dart';
-import 'package:giftly/presentation/pages/customer/favorite_page.dart';
-import 'package:giftly/presentation/pages/customer/helper_page.dart';
-import 'package:giftly/presentation/pages/customer/profile_page.dart';
-import 'package:giftly/presentation/pages/login_page.dart';
-import 'package:giftly/presentation/pages/seller/orders_page.dart';
-import 'package:giftly/presentation/pages/seller/stats_page.dart';
-import 'package:giftly/presentation/widgets/bottom_nav_bar.dart';
-import 'package:giftly/domain/models/user_role.dart';
-import 'package:giftly/domain/models/user.dart';
-import 'package:giftly/data/services/product_service.dart';
-import 'package:giftly/domain/models/product.dart';
-import 'package:giftly/presentation/pages/customer/ai_helper_page.dart';
+import 'package:client_giftly/presentation/pages/customer/cart_page.dart';
+import 'package:client_giftly/presentation/pages/customer/favorite_page.dart';
+import 'package:client_giftly/presentation/pages/customer/profile_page.dart';
+import 'package:client_giftly/presentation/pages/customer/helper_page.dart';
+import 'package:client_giftly/presentation/pages/login_page.dart';
+import 'package:client_giftly/presentation/pages/seller/orders_page.dart';
+import 'package:client_giftly/presentation/pages/seller/stats_page.dart';
+import 'package:client_giftly/presentation/widgets/bottom_nav_bar.dart';
+import 'package:client_giftly/domain/models/user_role.dart';
+import 'package:client_giftly/domain/models/user.dart';
+import 'package:client_giftly/data/services/product_service.dart';
+import 'package:client_giftly/domain/models/product.dart';
+import 'package:client_giftly/presentation/widgets/product_card.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
         index: _selectedIndex,
         children: [
           _MainContent(),
-          const HelperPage(),
+          HelperPage(),
           FavoritePage(user: _currentUser),
           CartPage(user: _currentUser),
           ProfilePage(
@@ -157,6 +157,20 @@ class _MainContentState extends State<_MainContent> {
     }).toList();
   }
 
+  void _onProductTap(Product product) {
+    // TODO: Добавить навигацию к деталям товара
+    print('Product tapped: ${product.name}');
+  }
+
+  void _onFavoriteChanged(Product product, bool isFavorite) {
+    setState(() {
+      final index = _allProducts.indexWhere((p) => p.id == product.id);
+      if (index != -1) {
+        _allProducts[index] = product.copyWith(isFavorite: isFavorite);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -215,11 +229,11 @@ class _MainContentState extends State<_MainContent> {
                 hintText: 'Поиск букетов...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Color(0xFFDFDFDF),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (value) {
@@ -246,8 +260,9 @@ class _MainContentState extends State<_MainContent> {
                       ),
                     ],
                   ),
+
                   child: IconButton(
-                    icon: const Icon(Icons.support_agent, color: Color(0xFF91BDE9)),
+                    icon: const Icon(Icons.support_agent, color: Colors.black),
                     onPressed: () {
                       // TODO: Открыть чат поддержки
                     },
@@ -269,7 +284,7 @@ class _MainContentState extends State<_MainContent> {
                     ],
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.filter_list, color: Color(0xFF91BDE9)),
+                    icon: const Icon(Icons.filter_list, color: Colors.black),
                     onPressed: () {
                       // TODO: Открыть фильтры
                     },
@@ -320,9 +335,9 @@ class _MainContentState extends State<_MainContent> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
               ),
               itemCount: _filteredProducts.length,
               itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
@@ -340,91 +355,182 @@ class _MainContentState extends State<_MainContent> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Изображение продукта
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: product.image.isNotEmpty
-                  ? Image.network(
-                      product.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
+          // Изображение продукта с кнопкой избранного
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: product.image.isNotEmpty
+                      ? Image.network(
+                          product.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/images/bouquet_sample.png',
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        )
+                      : Image.asset(
                           'assets/images/bouquet_sample.png',
                           fit: BoxFit.cover,
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      'assets/images/bouquet_sample.png',
-                      fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              // Кнопка избранного
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      try {
+                        final updatedProduct = await _productService.toggleFavorite(product);
+                        setState(() {
+                          final index = _allProducts.indexWhere((p) => p.id == product.id);
+                          if (index != -1) {
+                            _allProducts[index] = updatedProduct;
+                          }
+                        });
+                        if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  updatedProduct.isFavorite 
+                                    ? 'Товар добавлен в избранное'
+                                    : 'Товар удален из избранного'
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                      } catch (e) {
+                        if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Ошибка при обновлении избранного: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                      ),
+                      child: Icon(
+                        product.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: product.isFavorite ? Colors.red : Colors.grey[600],
+                        size: 20,
+                      ),
                     ),
-            ),
+                  ),
+                ),
+              ),
+            ],
           ),
           // Информация о продукте
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${product.price.toStringAsFixed(0)} ₽',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                      ]
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product.description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${product.price.toStringAsFixed(0)} ₽',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF91BDE9),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Добавить в корзину
+                  
+                  // Кнопка "В корзину"
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          await _productService.addToCart(product);
+                          if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Товар добавлен в корзину'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                        } catch (e) {
+                          if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Ошибка при добавлении в корзину: ${e.toString()}'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF91BDE9),
+                        backgroundColor: Color(0xFF91BDE9),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 3),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'В корзину',
+                        style: TextStyle(
+                          fontSize: 14,
                         ),
                       ),
-                      child: const Icon(Icons.shopping_cart, size: 20),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

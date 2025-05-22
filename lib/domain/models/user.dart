@@ -32,7 +32,7 @@ class User {
     }
 
     final user = User(
-      id: json['id'].toString(),
+      id: (json['id'] ?? json['pk'] ?? json['user_id'] ?? '').toString(),
       name: fullName,
       email: json['email'],
       photoUrl: json['photo_url'],
