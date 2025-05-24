@@ -73,6 +73,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _selectedIndex,
         children: [
@@ -285,165 +286,179 @@ class _MainContentState extends State<_MainContent> {
       onRefresh: () async {
         await _loadProducts();
       },
-      child: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0, top: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Location
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on, size: 18, color: Color(0xFF9191E9)),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Воронеж',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
+      child: Container(
+        color: Colors.white,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              pinned: true,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              toolbarHeight: 120,
+              flexibleSpace: Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0, top: 8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Location and Support Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Location
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 18, color: Color(0xFF9191E9)),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Воронеж',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Support Button
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEEFF1),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      // Support Button
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEEFF1),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.support_agent, color: Color(0xFF9191E9), size: 20),
-                          onPressed: () {
-                            // TODO: Открыть чат поддержки
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Search Bar and Filter Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Поиск по названию или описанию',
-                            hintStyle: TextStyle(color: Colors.grey[600]),
-                            prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFe8e8e8),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                          child: IconButton(
+                            icon: const Icon(Icons.support_agent, color: Color(0xFF9191E9), size: 20),
+                            onPressed: () {
+                              // TODO: Открыть чат поддержки
+                            },
                           ),
-                          onChanged: (value) {
-                            setState(() {});
-                          },
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Кнопка сортировки
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEEFF1),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Search Bar and Filter Button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Поиск по названию или описанию',
+                              hintStyle: TextStyle(color: Colors.grey[600]),
+                              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFe8e8e8),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                             ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
-                            color: const Color(0xFF9191E9),
-                            size: 20,
+                            onChanged: (value) {
+                              setState(() {});
+                            },
                           ),
-                          onPressed: _toggleSort,
-                          tooltip: _isAscending ? 'По возрастанию' : 'По убыванию',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEEFF1),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                        const SizedBox(width: 8),
+                        // Кнопка сортировки
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEEFF1),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                              color: const Color(0xFF9191E9),
+                              size: 20,
                             ),
-                          ],
+                            onPressed: _toggleSort,
+                            tooltip: _isAscending ? 'По возрастанию' : 'По убыванию',
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.filter_list, color: Color(0xFF9191E9), size: 20),
-                          onPressed: () {
-                            // TODO: Открыть фильтры
-                          },
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEEFF1),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.filter_list, color: Color(0xFF9191E9), size: 20),
+                            onPressed: () {
+                              // TODO: Открыть фильтры
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                Image.asset('assets/images/banner.png'),
-                const SizedBox(height: 24),
-                const Text(
-                  'Каталог букетов',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                  ),
-                  itemCount: _filteredProducts.length,
-                  itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      Image.asset('assets/images/banner.png'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Каталог букетов',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.65,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                        ),
+                        itemCount: _filteredProducts.length,
+                        itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
