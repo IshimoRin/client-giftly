@@ -161,6 +161,86 @@ class _MainContentState extends State<_MainContent> {
     _loadProducts();
   }
 
+  void _showSupportDialog() {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController problemController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Поддержка'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  hintText: 'Введите ваш email',
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Пожалуйста, введите email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Пожалуйста, введите корректный email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: problemController,
+                decoration: const InputDecoration(
+                  labelText: 'Опишите вашу проблему',
+                  hintText: 'Напишите подробно о вашей проблеме',
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Пожалуйста, опишите вашу проблему';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                // TODO: Отправить сообщение в поддержку
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Сообщение отправлено в поддержку'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9191E9),
+            ),
+            child: const Text(
+              'Отправить',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadProducts() async {
     try {
       setState(() {
@@ -338,9 +418,7 @@ class _MainContentState extends State<_MainContent> {
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.support_agent, color: Color(0xFF9191E9), size: 20),
-                            onPressed: () {
-                              // TODO: Открыть чат поддержки
-                            },
+                            onPressed: _showSupportDialog,
                           ),
                         ),
                       ],
