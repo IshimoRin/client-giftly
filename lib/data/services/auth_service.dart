@@ -26,6 +26,7 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'password': password,
+          'role': role == UserRole.seller ? 'seller' : 'buyer',
         }),
       ).timeout(
         const Duration(seconds: 10),
@@ -274,6 +275,7 @@ class AuthService {
   Future<User> register({
     required String email,
     required String password,
+    required UserRole role,
   }) async {
     try {
       print('Debug: Отправляем запрос на регистрацию для email: $email');
@@ -285,7 +287,7 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'password': password,
-          'role': 'buyer',
+          'role': role == UserRole.seller ? 'seller' : 'buyer',
         }),
       ).timeout(
         const Duration(seconds: 10),
@@ -319,13 +321,13 @@ class AuthService {
         await prefs.setString('token', token);
         await prefs.setString('user_id', userId);
         await prefs.setString('user_email', userData['email'] ?? email);
-        await prefs.setString('user_role', 'buyer');
+        await prefs.setString('user_role', role.toString());
         
         final user = User(
           id: userId,
           email: userData['email'] ?? email,
           name: '',
-          role: UserRole.customer,
+          role: role,
           phone: '',
           birthDate: null,
         );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
 import 'customer/home_page.dart';
+import 'seller/seller_home_page.dart';
 import '../../domain/models/user.dart';
 import '../../domain/models/user_role.dart';
 import '../../data/services/auth_service.dart';
@@ -41,8 +42,13 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (mounted) {
-        if (widget.onLoginSuccess != null) {
-          widget.onLoginSuccess!(user);
+        if (user.role == UserRole.seller) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SellerHomePage(user: user),
+            ),
+          );
         } else {
           Navigator.pushReplacement(
             context,

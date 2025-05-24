@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import '../../data/services/auth_service.dart';
+import '../../domain/models/user_role.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isSeller = false;
   final AuthService _authService = AuthService();
 
   @override
@@ -34,6 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
       final user = await _authService.register(
         email: emailController.text,
         password: passwordController.text,
+        role: _isSeller ? UserRole.seller : UserRole.customer,
       );
 
       if (mounted) {
@@ -176,6 +179,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isSeller,
+                      onChanged: (value) {
+                        setState(() {
+                          _isSeller = value ?? false;
+                        });
+                      },
+                      activeColor: const Color(0xFF9191E9),
+                    ),
+                    const Text(
+                      'Зарегистрироваться как продавец',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
