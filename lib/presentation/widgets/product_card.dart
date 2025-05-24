@@ -6,14 +6,16 @@ import '../../data/services/product_service.dart';
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
-  final Function(bool) onFavoriteChanged;
+  final VoidCallback? onFavoriteToggle;
+  final bool isFavorite;
   final ProductService productService;
 
   const ProductCard({
     Key? key,
     required this.product,
     required this.onTap,
-    required this.onFavoriteChanged,
+    this.onFavoriteToggle,
+    this.isFavorite = false,
     required this.productService,
   }) : super(key: key);
 
@@ -24,7 +26,6 @@ class ProductCard extends StatelessWidget {
       } else {
         await productService.addToFavorites(product.id);
       }
-      onFavoriteChanged(!product.isFavorite);
     } catch (e) {
       // TODO: Показать ошибку пользователю
       print('Error toggling favorite: $e');
@@ -34,74 +35,61 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: CachedNetworkImage(
-                      imageUrl: product.image,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      errorWidget: (context, url, error) => Container(
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.network(
+                    product.image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
                         color: Colors.grey[200],
                         child: const Icon(
                           Icons.image_not_supported,
+                          size: 50,
                           color: Colors.grey,
-                          size: 24,
                         ),
+                      );
+                    },
+                  ),
+                ),
+                if (onFavoriteToggle != null)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : Colors.white,
+                      ),
+                      onPressed: onFavoriteToggle,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black26,
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _toggleFavorite,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          product.isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: product.isFavorite ? Colors.red : Colors.grey,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -110,9 +98,9 @@ class ProductCard extends StatelessWidget {
                   Text(
                     '${product.price.toStringAsFixed(2)} ₽',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
+                      color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
                 ],

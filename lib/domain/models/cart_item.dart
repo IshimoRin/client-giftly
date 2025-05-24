@@ -58,10 +58,11 @@ class CartItem {
     final url = imageUrl.toString();
     print('Debug: Обработка URL изображения: $url');
     
-    // Если URL уже полный
+    // Если URL уже полный, заменяем https на http
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      print('Debug: URL уже полный: $url');
-      return url;
+      final httpUrl = url.replaceFirst('https://', 'http://');
+      print('Debug: URL преобразован в HTTP: $httpUrl');
+      return httpUrl;
     }
     
     // Если URL начинается с /media/

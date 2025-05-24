@@ -31,11 +31,16 @@ class _HomePageState extends State<HomePage> {
   late User _currentUser;
   int _selectedIndex = 0;
   final GlobalKey<CartPageState> _cartPageKey = GlobalKey<CartPageState>();
+  final ProductService _productService = ProductService();
+  List<Product> _products = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     _currentUser = widget.user;
+    _loadProducts();
   }
 
   void _updateUser(User updatedUser) {
@@ -43,6 +48,26 @@ class _HomePageState extends State<HomePage> {
       _currentUser = updatedUser;
       _selectedIndex = 4; // Возвращаем на страницу профиля
     });
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final products = await _productService.getProducts();
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -55,9 +80,15 @@ class _HomePageState extends State<HomePage> {
             _cartPageKey.currentState?.updateCart();
           }),
           HelperPage(),
-          FavoritePage(user: _currentUser, onCartUpdated: () {
-            _cartPageKey.currentState?.updateCart();
-          }),
+          FavoritePage(
+            user: _currentUser,
+            onCartUpdated: () {
+              _cartPageKey.currentState?.updateCart();
+            },
+            onFavoritesUpdated: () {
+              setState(() {}); // Обновляем состояние при изменении избранного
+            },
+          ),
           CartPage(key: _cartPageKey, user: _currentUser),
           ProfilePage(
             user: _currentUser,
@@ -121,26 +152,12 @@ class _MainContentState extends State<_MainContent> {
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Все';
-  bool _isAscending = true; // Добавляем состояние для сортировки
-
-  final List<String> _categories = [
-    'Все',
-    'Букеты',
-    'Композиции',
-    'Подарки',
-    'Акции',
-  ];
+  bool _isAscending = true;
 
   @override
   void initState() {
     super.initState();
     _loadProducts();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadProducts() async {
@@ -193,20 +210,6 @@ class _MainContentState extends State<_MainContent> {
   void _toggleSort() {
     setState(() {
       _isAscending = !_isAscending;
-    });
-  }
-
-  void _onProductTap(Product product) {
-    // TODO: Добавить навигацию к деталям товара
-    print('Product tapped: ${product.name}');
-  }
-
-  void _onFavoriteChanged(Product product, bool isFavorite) {
-    setState(() {
-      final index = _allProducts.indexWhere((p) => p.id == product.id);
-      if (index != -1) {
-        _allProducts[index] = product.copyWith(isFavorite: isFavorite);
-      }
     });
   }
 
@@ -358,7 +361,7 @@ class _MainContentState extends State<_MainContent> {
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFEEEFF1),
+                            fillColor: const Color(0xFFe8e8e8),
                             contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                           ),
                           onChanged: (value) {
@@ -424,15 +427,15 @@ class _MainContentState extends State<_MainContent> {
                   'Каталог букетов',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.65,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
                   ),
                   itemCount: _filteredProducts.length,
                   itemBuilder: (context, index) => _buildProductCard(_filteredProducts[index]),

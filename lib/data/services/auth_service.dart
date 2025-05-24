@@ -14,9 +14,12 @@ class AuthService {
     required UserRole role,
   }) async {
     try {
+      final loginUrl = ApiConfig.loginUrl.replaceFirst('https://', 'http://');
       print('Debug: Отправляем запрос на вход для email: $email');
+      print('Debug: URL входа: $loginUrl');
+      
       final response = await http.post(
-        Uri.parse(ApiConfig.loginUrl),
+        Uri.parse(loginUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -106,7 +109,9 @@ class AuthService {
   Future<void> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      print('Debug: Удаляем токен при выходе');
       await prefs.remove('token');
+      print('Debug: Токен удален');
     } catch (e) {
       print('Ошибка при выходе: $e');
       throw Exception('Ошибка при выходе из аккаунта: $e');
@@ -114,13 +119,27 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token') != null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      print('Debug: Проверка авторизации: ${token != null ? 'пользователь авторизован' : 'пользователь не авторизован'}');
+      return token != null;
+    } catch (e) {
+      print('Debug: Ошибка при проверке авторизации: $e');
+      return false;
+    }
   }
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      print('Debug: Получен токен из SharedPreferences: ${token != null ? 'токен существует' : 'токен отсутствует'}');
+      return token;
+    } catch (e) {
+      print('Debug: Ошибка при получении токена: $e');
+      return null;
+    }
   }
 
   Future<User?> getSavedUser() async {

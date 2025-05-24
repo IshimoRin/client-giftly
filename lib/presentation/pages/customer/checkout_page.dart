@@ -153,7 +153,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FavoritePage(user: widget.user, onCartUpdated: () {}),
+          builder: (context) => FavoritePage(
+            user: widget.user,
+            onCartUpdated: () {},
+            onFavoritesUpdated: () {},
+          ),
         ),
       );
     } else if (index == 3) {
