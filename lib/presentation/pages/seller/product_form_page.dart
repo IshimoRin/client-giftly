@@ -96,96 +96,218 @@ class _ProductFormPageState extends State<ProductFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.product == null ? 'Новый товар' : 'Редактирование товара'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Название товара',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите название товара';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Описание товара',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите описание товара';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(
-                        labelText: 'Цена',
-                        border: OutlineInputBorder(),
-                        prefixText: '₽ ',
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите цену товара';
-                        }
-                        if (double.tryParse(value) == null) {
-                          return 'Пожалуйста, введите корректную цену';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _imageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'URL изображения (необязательно)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: Text(
-                        widget.product == null ? 'Создать товар' : 'Сохранить изменения',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        title: Padding(
+          padding: const EdgeInsets.only(top: 16.0),
+          child: Text(
+            widget.product == null ? 'Новый товар' : 'Редактировать товар',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              color: Colors.black,
             ),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        toolbarHeight: 80,
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 16.0),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                const Text(
+                  'Название',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Пожалуйста, введите название товара';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Описание',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Пожалуйста, введите описание товара';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Цена',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Пожалуйста, введите цену товара';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Введите корректную цену';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'URL изображения',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _imageUrlController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF9191E9),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          widget.product == null ? 'Создать товар' : 'Сохранить изменения',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 } 

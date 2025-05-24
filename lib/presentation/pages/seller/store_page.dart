@@ -76,12 +76,31 @@ class _StorePageState extends State<StorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Управление товарами'),
+        title: Padding(
+          padding: const EdgeInsets.only(top: 16.0),
+          child: Text(
+            'Управление товарами',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 23,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        toolbarHeight: 80,
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProducts,
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadProducts,
+            ),
           ),
         ],
       ),
