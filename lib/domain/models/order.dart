@@ -1,12 +1,9 @@
 import 'cart_item.dart';
 
 enum OrderStatus {
-  pending,    // Ожидает подтверждения
-  confirmed,  // Подтвержден
-  processing, // В обработке
-  shipping,   // Доставляется
-  delivered,  // Доставлен
-  cancelled   // Отменен
+  pending,    // В обработке
+  completed,  // Завершён
+  canceled    // Отменён
 }
 
 class Order {
@@ -49,16 +46,10 @@ class Order {
       switch (status.toLowerCase()) {
         case 'pending':
           return OrderStatus.pending;
-        case 'confirmed':
-          return OrderStatus.confirmed;
-        case 'processing':
-          return OrderStatus.processing;
-        case 'shipping':
-          return OrderStatus.shipping;
-        case 'delivered':
-          return OrderStatus.delivered;
-        case 'cancelled':
-          return OrderStatus.cancelled;
+        case 'completed':
+          return OrderStatus.completed;
+        case 'canceled':
+          return OrderStatus.canceled;
         default:
           return OrderStatus.pending;
       }

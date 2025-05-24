@@ -35,14 +35,22 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      print('Debug: Начинаем процесс входа');
+      print('Debug: Email: ${emailController.text.trim()}');
+      print('Debug: Роль: ${_isSellerLogin ? 'seller' : 'customer'}');
+
       final user = await AuthService().login(
         email: emailController.text.trim(),
         password: passwordController.text,
         role: _isSellerLogin ? UserRole.seller : UserRole.customer,
       );
 
+      print('Debug: Вход выполнен успешно');
+      print('Debug: Роль пользователя: ${user.role}');
+
       if (mounted) {
         if (user.role == UserRole.seller) {
+          print('Debug: Перенаправляем на страницу продавца');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -50,6 +58,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else {
+          print('Debug: Перенаправляем на страницу покупателя');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

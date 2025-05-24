@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:client_giftly/domain/models/user.dart';
 import 'package:client_giftly/domain/models/user_role.dart';
 import 'package:client_giftly/presentation/widgets/bottom_nav_bar.dart';
-
 import 'orders_page.dart';
 import 'stats_page.dart';
 import 'store_page.dart';
@@ -33,8 +32,6 @@ class _SellerHomePageState extends State<SellerHomePage> {
   void _updateUser(User updatedUser) {
     setState(() {
       _currentUser = updatedUser;
-      // Возможно, нужно сбросить selectedIndex или перейти на профиль после обновления
-      // _selectedIndex = 3; // Индекс профиля для продавца
     });
   }
 
@@ -47,9 +44,9 @@ class _SellerHomePageState extends State<SellerHomePage> {
     }
 
     final List<Widget> _pages = [
+      StorePage(), // Управление товарами
       OrdersPage(), // Заказы продавца
       StatsPage(), // Статистика магазина
-      StorePage(), // Управление товарами
       ProfilePage(user: _currentUser, onUserUpdated: _updateUser), // Профиль
     ];
 

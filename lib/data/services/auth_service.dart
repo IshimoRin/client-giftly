@@ -47,6 +47,9 @@ class AuthService {
           throw Exception('Ошибка: сервер не вернул данные пользователя');
         }
 
+        print('Debug: Получены данные пользователя: $userData');
+        print('Debug: Роль пользователя: ${role.toString()}');
+
         final userId = userData['id']?.toString();
         if (userId == null || userId.isEmpty) {
           print('Debug: ID пользователя не найден в ответе: $userData');
@@ -76,11 +79,29 @@ class AuthService {
           await prefs.setString('user_birth_date', userData['birth_date']);
         }
 
+        // Если пользователь продавец, сохраняем его ID как seller_id
+        if (role == UserRole.seller) {
+          print('Debug: Пользователь является продавцом, сохраняем seller_id');
+          print('Debug: userId для сохранения: $userId');
+          try {
+            final sellerId = int.parse(userId);
+            await prefs.setInt('seller_id', sellerId);
+            print('Debug: seller_id успешно сохранен: ${prefs.getInt('seller_id')}');
+          } catch (e) {
+            print('Debug: Ошибка при сохранении seller_id: $e');
+            throw Exception('Ошибка при сохранении ID продавца: $e');
+          }
+        } else {
+          print('Debug: Пользователь не является продавцом, seller_id не сохраняется');
+        }
+
         print('Debug: Проверяем сохраненные данные:');
         print('Debug: token: ${prefs.getString('token')}');
         print('Debug: user_id: ${prefs.getString('user_id')}');
         print('Debug: user_email: ${prefs.getString('user_email')}');
         print('Debug: user_name: ${prefs.getString('user_name')}');
+        print('Debug: user_role: ${prefs.getString('user_role')}');
+        print('Debug: seller_id: ${prefs.getInt('seller_id')}');
         
         final user = User(
           id: userId,
@@ -112,7 +133,15 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       print('Debug: Удаляем токен при выходе');
       await prefs.remove('token');
-      print('Debug: Токен удален');
+      await prefs.remove('user_id');
+      await prefs.remove('user_email');
+      await prefs.remove('user_name');
+      await prefs.remove('user_role');
+      await prefs.remove('user_phone');
+      await prefs.remove('user_birth_date');
+      // Не удаляем seller_id, так как он может понадобиться при повторном входе
+      print('Debug: Токен и данные пользователя удалены');
+      print('Debug: seller_id сохранен: ${prefs.getInt('seller_id')}');
     } catch (e) {
       print('Ошибка при выходе: $e');
       throw Exception('Ошибка при выходе из аккаунта: $e');

@@ -501,17 +501,11 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
   String _getStatusText(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-        return 'Ожидает подтверждения';
-      case OrderStatus.confirmed:
-        return 'Подтвержден';
-      case OrderStatus.processing:
         return 'В обработке';
-      case OrderStatus.shipping:
-        return 'Доставляется';
-      case OrderStatus.delivered:
-        return 'Доставлен';
-      case OrderStatus.cancelled:
-        return 'Отменен';
+      case OrderStatus.completed:
+        return 'Завершён';
+      case OrderStatus.canceled:
+        return 'Отменён';
     }
   }
 
@@ -519,15 +513,9 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
     switch (status) {
       case OrderStatus.pending:
         return Colors.orange;
-      case OrderStatus.confirmed:
-        return Colors.blue;
-      case OrderStatus.processing:
-        return Colors.purple;
-      case OrderStatus.shipping:
-        return Colors.indigo;
-      case OrderStatus.delivered:
+      case OrderStatus.completed:
         return Colors.green;
-      case OrderStatus.cancelled:
+      case OrderStatus.canceled:
         return Colors.red;
     }
   }

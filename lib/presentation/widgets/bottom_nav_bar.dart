@@ -31,8 +31,8 @@ class BottomNavBar extends StatelessWidget {
     if (role == UserRole.seller) {
       return const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Главная',
+          icon: Icon(Icons.store),
+          label: 'Магазин',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.shopping_bag),
@@ -56,16 +56,12 @@ class BottomNavBar extends StatelessWidget {
         label: 'Главная',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.smart_toy),
-        label: 'Помощник',
+        icon: Icon(Icons.favorite),
+        label: 'Избранное',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.shopping_cart),
         label: 'Корзина',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.favorite),
-        label: 'Избранное',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.person),
