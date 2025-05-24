@@ -283,18 +283,38 @@ class _LoginPageState extends State<LoginPage> {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     side: BorderSide(color: Color(0xFF9191E9)),
+                    backgroundColor: _isSellerLogin ? Color(0xFF9191E9).withOpacity(0.1) : Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     minimumSize: const Size(double.infinity, 0),
                   ),
-                  child: Text(
-                    _isSellerLogin ? 'Войти как покупатель' : 'Войти как продавец',
-                    style: TextStyle(
-                      color: Color(0xFF9191E9),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _isSellerLogin ? Icons.store : Icons.person,
+                        color: Color(0xFF9191E9),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isSellerLogin ? 'Войти как продавец' : 'Войти как покупатель',
+                        style: TextStyle(
+                          color: Color(0xFF9191E9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_isSellerLogin) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF9191E9),
+                          size: 16,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
