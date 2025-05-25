@@ -36,6 +36,12 @@ class _ProfilePageState extends State<ProfilePage> {
     _currentUser = widget.user;
   }
 
+  @override
+  void dispose() {
+    // No-op
+    super.dispose();
+  }
+
   void _navigateTo(Widget content) {
     setState(() {
       _currentContent = content;
@@ -183,7 +189,17 @@ class _ProfilePageState extends State<ProfilePage> {
             title: 'История заказов',
             icon: Icons.history,
             onTap: () {
-              _navigateTo(const OrderHistoryContent());
+              if (_currentUser != null) {
+                _navigateTo(OrderHistoryContent(user: _currentUser));
+              } else {
+                print('Ошибка: Пользователь не авторизован или данные не загружены.');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Пожалуйста, войдите в аккаунт.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
         _buildProfileOption(
@@ -208,7 +224,7 @@ class _ProfilePageState extends State<ProfilePage> {
           icon: Icons.support_agent,
           tag: 'Всегда на связи',
           onTap: () {
-            _navigateTo(const SupportContent());
+            _showSupportDialog();
           },
         ),
         _buildProfileOption(
@@ -287,6 +303,114 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       trailing: const Icon(Icons.arrow_forward_ios, size: 18),
       onTap: onTap,
+    );
+  }
+
+  // Метод для отображения диалога поддержки (скопировано из home_page.dart)
+  void _showSupportDialog() {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController problemController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Поддержка'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  hintText: 'Введите ваш email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Пожалуйста, введите email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Пожалуйста, введите корректный email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: problemController,
+                decoration: InputDecoration(
+                  labelText: 'Опишите вашу проблему',
+                  hintText: 'Напишите подробно о вашей проблеме',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Пожалуйста, опишите вашу проблему';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                // TODO: Отправить сообщение в поддержку
+                print('Сообщение отправлено в поддержку от ${emailController.text}'); // Логируем email
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Сообщение отправлено в поддержку'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9191E9),
+            ),
+            child: const Text(
+              'Отправить',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -466,7 +590,8 @@ class _SettingsContentState extends State<SettingsContent> {
 }
 
 class OrderHistoryContent extends StatefulWidget {
-  const OrderHistoryContent({super.key});
+  final User user;
+  const OrderHistoryContent({super.key, required this.user});
 
   @override
   State<OrderHistoryContent> createState() => _OrderHistoryContentState();
@@ -475,21 +600,23 @@ class OrderHistoryContent extends StatefulWidget {
 class _OrderHistoryContentState extends State<OrderHistoryContent> {
   final OrderService _orderService = OrderService();
   List<Order> _orders = [];
-  List<Order> _filteredOrders = [];
+  List<Order> _filteredOrders = []; // Список для отображения после фильтрации
   bool _isLoading = true;
   String? _error;
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController(); // Контроллер для поля поиска
+  OrderStatus? _selectedStatus; // Переменная для хранения выбранного статуса
 
   @override
   void initState() {
     super.initState();
     _loadOrders();
+    // Добавляем слушатель для поля поиска
     _searchController.addListener(_filterOrders);
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _searchController.dispose(); // Очищаем контроллер при удалении виджета
     super.dispose();
   }
 
@@ -497,8 +624,8 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
     try {
       final orders = await _orderService.getUserOrders();
       setState(() {
-        _orders = orders;
-        _filteredOrders = orders;
+        _orders = orders; // Сохраняем полный список
+        _filteredOrders = orders; // Изначально отфильтрованный список равен полному
         _isLoading = false;
       });
     } catch (e) {
@@ -509,19 +636,61 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
     }
   }
 
+  // Метод для фильтрации заказов
   void _filterOrders() {
-    final query = _searchController.text.toLowerCase().trim();
+    final query = _searchController.text.toLowerCase().trim(); // Удаляем пробелы по краям
     setState(() {
-      if (query.isEmpty) {
-        _filteredOrders = List.from(_orders);
-      } else {
-        _filteredOrders = _orders.where((order) {
-          final orderNumberMatch = order.id?.toLowerCase().contains(query) ?? false;
-          final productNameMatch = order.items.any((item) => item.name.toLowerCase().contains(query));
-          return orderNumberMatch || productNameMatch;
-        }).toList();
+      _filteredOrders = _orders.where((order) {
+        final orderNumberMatch = order.id?.toLowerCase().contains(query) ?? false;
+        final productNameMatch = order.items.any((item) => item.name.toLowerCase().contains(query));
+
+        // Проверяем соответствие выбранному статусу
+        final statusMatch = _selectedStatus == null || order.status == _selectedStatus;
+
+        return (orderNumberMatch || productNameMatch) && statusMatch;
+      }).toList();
+      
+      // Если поисковый запрос пустой и статус не выбран, показываем все заказы
+      if (query.isEmpty && _selectedStatus == null) {
+         _filteredOrders = List.from(_orders);
       }
     });
+  }
+
+  // Метод для отображения диалога выбора статуса
+  void _showStatusFilter() {
+    showModalBottomSheet( // Используем bottom sheet для выбора статуса
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Все заказы'),
+                onTap: () {
+                  setState(() {
+                    _selectedStatus = null; // Сброс фильтра
+                  });
+                  _filterOrders();
+                  Navigator.pop(context);
+                },
+              ),
+              ...OrderStatus.values.map((status) => ListTile(
+                title: Text(_getStatusText(status)),
+                onTap: () {
+                  setState(() {
+                    _selectedStatus = status;
+                  });
+                  _filterOrders();
+                  Navigator.pop(context);
+                },
+              )).toList(),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   String _getStatusText(OrderStatus status) {
@@ -587,13 +756,21 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              children: [
-                Icon(Icons.filter_list, color: Colors.grey[700]),
-                SizedBox(width: 8.0),
-                Text('Все заказы', style: TextStyle(fontSize: 16.0, color: Colors.grey[700])),
-                Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
-              ],
+            child: GestureDetector(
+              onTap: _showStatusFilter,
+              child: Row(
+                children: [
+                  Icon(Icons.filter_list, color: Colors.grey[700]),
+                  SizedBox(width: 8.0),
+                  Text(
+                    _selectedStatus == null
+                        ? 'Все заказы'
+                        : _getStatusText(_selectedStatus!), // Отображаем выбранный статус
+                    style: TextStyle(fontSize: 16.0, color: Colors.grey[700]),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
+                ],
+              ),
             ),
           ),
           Expanded(
@@ -635,7 +812,7 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -645,7 +822,7 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
                                               Icon(Icons.person, size: 16.0, color: Colors.grey[600]),
                                               SizedBox(width: 4.0),
                                               Text(
-                                                'Данила',
+                                                widget.user.name ?? 'Пользователь',
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.grey[600],
@@ -687,7 +864,6 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
                                               style: TextStyle(
                                                 color: _getStatusColor(order.status),
                                                 fontSize: 12,
-                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
@@ -757,19 +933,24 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
                                         ],
                                       ),
                                       const SizedBox(height: 16),
-                                      Center(
-                                        child: OutlinedButton(
-                                          onPressed: () {
-                                            // TODO: Implement rating action for this order
-                                          },
-                                           style: OutlinedButton.styleFrom(
-                                            side: BorderSide(color: Color(0xFF9191E9)),
-                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12.0),
-                                            ),
-                                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          _showRatingDialog(order.id);
+                                        },
+                                         style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF9191E9),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12.0),
                                           ),
-                                          child: Text('Оцените нас', style: TextStyle(color: Color(0xFF9191E9), fontSize: 16)),
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          minimumSize: const Size(double.infinity, 0),
+                                        ),
+                                        child: const Text(
+                                          'Оцените нас',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -781,6 +962,82 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
           ),
         ],
       ),
+    );
+  }
+
+  // Метод для отображения диалога оценки
+  void _showRatingDialog(String? orderId) {
+    double _rating = 0.0;
+    final TextEditingController _reviewController = TextEditingController();
+
+    showDialog( // Используем Dialog для окна оценки
+      context: context,
+      builder: (BuildContext context) {
+        // Используем StatefulBuilder для обновления состояния внутри диалога
+        return AlertDialog(
+          title: const Text(
+            'Оцените заказ',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: StatefulBuilder( // Оборачиваем контент в StatefulBuilder
+              builder: (BuildContext context, StateSetter setState) {
+                return ListBody(
+                  children: <Widget>[
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return IconButton(
+                            icon: Icon(
+                              index < _rating ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 30, // Увеличим размер звезд для удобства
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _rating = index + 1.0; // Обновляем рейтинг
+                              });
+                            },
+                          );
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _reviewController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Напишите ваш отзыв...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Отмена'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Отправить'),
+              onPressed: () {
+                // TODO: Отправить оценку и отзыв на сервер
+                print('Отправка оценки для заказа $orderId: Рейтинг $_rating, Отзыв: ${_reviewController.text}');
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1122,13 +1379,67 @@ class ReturnPolicyContent extends StatelessWidget {
           ),
         ),
       ),
-      body: const Padding(
+      body: const SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             SizedBox(height: 16),
-            // Здесь будет информация о возврате
+            Text(
+              '1. Можно ли вернуть товар, если он не понравился?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Цветы, бенто-торты, скоропортящиеся товары и изделия ручной работы возврату и обмену не подлежат, если они соответствуют описанию и качеству.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+             Text(
+              'Если товар был доставлен с дефектом или не соответствует заказу, свяжитесь с нами в течение 24 часов через поддержку, и мы решим вопрос.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '2. Как оформить возврат?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '1. Напишите в поддержку Giftly (соответствующий раздел в профиле или на главной странице кнопка сверху) в течение 24 часов после получения.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '2. Укажите номер заказа, фото товара и описание проблемы.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+             Text(
+              '3. Мы свяжемся с продавцом и предложим решение: замену, частичный или полный возврат средств.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '3. Когда вернут деньги?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Срок возврата – от 3 до 10 рабочих дней, в зависимости от платежной системы.',
+              style: TextStyle(fontSize: 14),
+            ),
+            // Здесь будут правовые документы
           ],
         ),
       ),
@@ -1196,11 +1507,98 @@ class BecomeSellerContent extends StatelessWidget {
           ),
         ),
       ),
-      body: const Padding(
+      body: const SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              '1. Кто может стать продавцом?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Мы сотрудничаем с:',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '✔ Самозанятыми',
+              style: TextStyle(fontSize: 14),
+            ),
+            Text(
+              '✔ Мастерами рукоделия',
+              style: TextStyle(fontSize: 14),
+            ),
+            Text(
+              '✔ Небольшими цветочными магазинами',
+              style: TextStyle(fontSize: 14),
+            ),
+            Text(
+              '✔ Кондитерами (бенто-торты, сладости)',
+              style: TextStyle(fontSize: 14),
+            ),
+            Text(
+              '✔ Производителями подарков и праздничных атрибутов',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '2. Как зарегистрироваться?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '1. Скачайте приложение и пройдите быструю регистрацию – укажите email или номер телефона',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '2. Создайте карточку товара – загрузите фото, укажите название, описание и цену.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '3. После проверки модерацией ваш товар появится в каталоге, а вы получите полный доступ к личному кабинету.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 16),
+            Text(
+              '3. Сколько стоит размещение?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Комиссия зависит от категории товара и формата сотрудничества. Подробности уточняйте у менеджера.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '4. Как происходит доставка?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+             Text(
+              '✔ Вы можете доставлять заказы самостоятельно.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+             Text(
+              '✔ Или использовать нашу логистику (условия обсуждаются индивидуально).',
+              style: TextStyle(fontSize: 14),
+            ),
             SizedBox(height: 16),
             // Здесь будет информация о том, как стать продавцом
           ],
