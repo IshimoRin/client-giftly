@@ -9,6 +9,7 @@ import '../../../data/services/auth_service.dart';
 import 'package:client_giftly/presentation/pages/login_page.dart';
 import '../../../domain/models/order.dart';
 import '../../../data/services/order_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -474,13 +475,22 @@ class OrderHistoryContent extends StatefulWidget {
 class _OrderHistoryContentState extends State<OrderHistoryContent> {
   final OrderService _orderService = OrderService();
   List<Order> _orders = [];
+  List<Order> _filteredOrders = [];
   bool _isLoading = true;
   String? _error;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadOrders();
+    _searchController.addListener(_filterOrders);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadOrders() async {
@@ -488,6 +498,7 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
       final orders = await _orderService.getUserOrders();
       setState(() {
         _orders = orders;
+        _filteredOrders = orders;
         _isLoading = false;
       });
     } catch (e) {
@@ -496,6 +507,21 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
         _isLoading = false;
       });
     }
+  }
+
+  void _filterOrders() {
+    final query = _searchController.text.toLowerCase().trim();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredOrders = List.from(_orders);
+      } else {
+        _filteredOrders = _orders.where((order) {
+          final orderNumberMatch = order.id?.toLowerCase().contains(query) ?? false;
+          final productNameMatch = order.items.any((item) => item.name.toLowerCase().contains(query));
+          return orderNumberMatch || productNameMatch;
+        }).toList();
+      }
+    });
   }
 
   String _getStatusText(OrderStatus status) {
@@ -540,103 +566,221 @@ class _OrderHistoryContentState extends State<OrderHistoryContent> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Ошибка при загрузке заказов',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _loadOrders,
-                        child: const Text('Повторить'),
-                      ),
-                    ],
-                  ),
-                )
-              : _orders.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'У вас пока нет заказов',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _orders.length,
-                      itemBuilder: (context, index) {
-                        final order = _orders[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Заказ #${order.id}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Номер заказа, товар',
+                prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0)
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                Icon(Icons.filter_list, color: Colors.grey[700]),
+                SizedBox(width: 8.0),
+                Text('Все заказы', style: TextStyle(fontSize: 16.0, color: Colors.grey[700])),
+                Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Ошибка при загрузке заказов',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: _loadOrders,
+                              child: const Text('Повторить'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filteredOrders.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'У вас пока нет заказов',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: _filteredOrders.length,
+                            itemBuilder: (context, index) {
+                              final order = _filteredOrders[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(Icons.person, size: 16.0, color: Colors.grey[600]),
+                                              SizedBox(width: 4.0),
+                                              Text(
+                                                'Данила',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            'от ${order.createdAt.toString().split('.')[0].split(' ')[0]}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _getStatusColor(order.status),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        _getStatusText(order.status),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '№${order.id}',
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: _getStatusColor(order.status).withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              _getStatusText(order.status),
+                                              style: TextStyle(
+                                                color: _getStatusColor(order.status),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            '${order.totalAmount.toStringAsFixed(2)} ₽',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Оплачен',
+                                        style: TextStyle(
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.bold,
                                           fontSize: 12,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                ...order.items.map((item) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 4),
-                                      child: Text(
-                                        '${item.name} - ${item.quantity} шт.',
-                                        style: const TextStyle(fontSize: 16),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          ...order.items.take(4).map((item) => Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: item.image.isNotEmpty
+                                                ? (item.image == 'assets/images/bouquet_sample.png'
+                                                    ? ClipRRect(
+                                                        borderRadius: BorderRadius.circular(8.0),
+                                                        child: Image.asset(
+                                                            item.image,
+                                                            width: 60, 
+                                                            height: 60, 
+                                                            fit: BoxFit.cover,
+                                                        ),
+                                                      )
+                                                    : ClipRRect(
+                                                        borderRadius: BorderRadius.circular(8.0),
+                                                        child: CachedNetworkImage(
+                                                            imageUrl: item.image,
+                                                            width: 60, 
+                                                            height: 60, 
+                                                            fit: BoxFit.cover,
+                                                            placeholder: (context, url) => Container(
+                                                              width: 60,
+                                                              height: 60,
+                                                              color: Colors.grey[300],
+                                                            ),
+                                                            errorWidget: (context, url, error) => Container(
+                                                              width: 60,
+                                                              height: 60,
+                                                              color: Colors.grey[300],
+                                                              child: Icon(Icons.error),
+                                                            ),
+                                                        ),
+                                                      ))
+                                                : Container(
+                                                    width: 60, 
+                                                    height: 60, 
+                                                    color: Colors.grey[300],
+                                                    child: Icon(Icons.image_not_supported),
+                                                  ),
+                                          )),
+                                          if (order.items.length > 4) Expanded(child: Text('+${order.items.length - 4} еще', style: TextStyle(color: Colors.grey[600]))),
+                                        ],
                                       ),
-                                    )),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Сумма: ${order.totalAmount.toStringAsFixed(2)} ₽',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                      const SizedBox(height: 16),
+                                      Center(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            // TODO: Implement rating action for this order
+                                          },
+                                           style: OutlinedButton.styleFrom(
+                                            side: BorderSide(color: Color(0xFF9191E9)),
+                                             shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                                          ),
+                                          child: Text('Оцените нас', style: TextStyle(color: Color(0xFF9191E9), fontSize: 16)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Дата: ${order.createdAt.toString().split('.')[0]}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+          ),
+        ],
+      ),
     );
   }
 }
