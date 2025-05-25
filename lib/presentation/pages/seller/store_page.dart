@@ -138,30 +138,37 @@ class _StorePageState extends State<StorePage> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
                                   product.image,
-                                  width: 60,
-                                  height: 60,
+                                  width: 100,
+                                  height: 100,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
-                                      width: 60,
-                                      height: 60,
+                                      width: 100,
+                                      height: 100,
                                       color: Colors.grey[200],
                                       child: const Icon(Icons.image_not_supported),
                                     );
                                   },
                                 ),
                               ),
-                              title: Text(product.name),
+                              title: Text(
+                                product.name,
+                                style: const TextStyle(fontSize: 14),
+                              ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(product.description),
+                                  Text(
+                                    product.description,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${product.price.toStringAsFixed(2)} ₽',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
