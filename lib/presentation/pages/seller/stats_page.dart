@@ -192,10 +192,16 @@ class _StatsPageState extends State<StatsPage> {
                 LineChartData(
                   gridData: const FlGridData(show: true),
                   titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
+                    leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 40,
+                        reservedSize: 30,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toStringAsFixed(0),
+                            style: const TextStyle(fontSize: 8),
+                          );
+                        },
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -208,11 +214,12 @@ class _StatsPageState extends State<StatsPage> {
                           final date = dailyStats[value.toInt()].date;
                           return Text(
                             DateFormat('dd.MM').format(date),
-                            style: const TextStyle(fontSize: 10),
+                            style: const TextStyle(fontSize: 8),
                           );
                         },
                         reservedSize: 30,
                       ),
+
                     ),
                     rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),

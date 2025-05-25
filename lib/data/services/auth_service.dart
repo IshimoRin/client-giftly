@@ -50,6 +50,22 @@ class AuthService {
         print('Debug: Получены данные пользователя: $userData');
         print('Debug: Роль пользователя: ${role.toString()}');
 
+        // Проверяем роль, полученную от сервера
+        final serverRole = userData['role']?.toString()?.toLowerCase();
+        if (serverRole == null) {
+          throw Exception('Ошибка: сервер не вернул роль пользователя');
+        }
+
+        // Проверяем, совпадает ли роль с сервера с выбранной ролью
+        final isSeller = serverRole == 'seller';
+        final isBuyer = serverRole == 'buyer';
+        final selectedRoleIsSeller = role == UserRole.seller;
+
+        if ((isSeller && !selectedRoleIsSeller) || (isBuyer && selectedRoleIsSeller)) {
+          final correctRole = isSeller ? 'продавцом' : 'покупателем';
+          throw Exception('Вы зарегистрированы как $correctRole. Пожалуйста, выберите соответствующую роль при входе в систему.');
+        }
+
         final userId = userData['id']?.toString();
         if (userId == null || userId.isEmpty) {
           print('Debug: ID пользователя не найден в ответе: $userData');
@@ -111,6 +127,11 @@ class AuthService {
           phone: userData['phone'] ?? '',
           birthDate: userData['birth_date'] != null ? DateTime.parse(userData['birth_date']) : null,
         );
+
+        // Проверяем, совпадает ли роль пользователя с указанной при входе
+        if (user.role != role) {
+          throw Exception('Ошибка: вы пытаетесь войти с неправильной ролью. Пожалуйста, выберите правильную роль.');
+        }
 
         print('Debug: Создан объект пользователя: ${user.toString()}');
         return user;
@@ -279,7 +300,7 @@ class AuthService {
           id: userId,
           email: email,
           name: fullName,
-          role: UserRole.customer,
+          role: data['role']?.toString()?.toLowerCase() == 'seller' ? UserRole.seller : UserRole.customer,
           phone: phone,
           birthDate: birthDateStr != null ? DateTime.tryParse(birthDateStr) : null,
         );

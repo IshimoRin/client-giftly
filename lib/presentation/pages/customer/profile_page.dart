@@ -75,9 +75,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Профиль',
-          style: TextStyle(
+        title: Text(
+          _currentUser.role == UserRole.seller ? 'Профиль продавца' : 'Профиль',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
@@ -179,11 +179,12 @@ class _ProfilePageState extends State<ProfilePage> {
           context: context,
           title: 'Настройки',
           icon: Icons.settings,
+          tag: 'В разработке',
           onTap: () {
-            _navigateTo(const SettingsContent());
+            _navigateTo(SettingsContent());
           },
         ),
-        if (_currentUser.role != UserRole.guest)
+        if (_currentUser.role == UserRole.customer) ...[
           _buildProfileOption(
             context: context,
             title: 'История заказов',
@@ -202,6 +203,15 @@ class _ProfilePageState extends State<ProfilePage> {
               }
             },
           ),
+          _buildProfileOption(
+            context: context,
+            title: 'Как стать продавцом',
+            icon: Icons.business,
+            onTap: () {
+              _navigateTo(const BecomeSellerContent());
+            },
+          ),
+        ],
         _buildProfileOption(
           context: context,
           title: 'Правовые документы',
@@ -210,6 +220,16 @@ class _ProfilePageState extends State<ProfilePage> {
             _navigateTo(const LegalDocsContent());
           },
         ),
+        if (_currentUser.role == UserRole.seller) ...[
+          _buildProfileOption(
+            context: context,
+            title: 'Положение для продавца',
+            icon: Icons.handshake_outlined,
+            onTap: () {
+              _navigateTo(const SellerAgreementContent());
+            },
+          ),
+        ],
         _buildProfileOption(
           context: context,
           title: 'О возврате товара',
@@ -239,14 +259,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 mode: LaunchMode.externalApplication,
               );
             }
-          },
-        ),
-        _buildProfileOption(
-          context: context,
-          title: 'Как стать продавцом',
-          icon: Icons.business,
-          onTap: () {
-            _navigateTo(const BecomeSellerContent());
           },
         ),
         _buildProfileOption(
@@ -448,140 +460,134 @@ class _SettingsContentState extends State<SettingsContent> {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          // Тема приложения
-          Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.orange.withOpacity(0.1),
+            child: Row(
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Icon(Icons.info_outline, color: Colors.orange[700]),
+                const SizedBox(width: 8),
+                Expanded(
                   child: Text(
-                    'Внешний вид',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SwitchListTile(
-                  title: const Text('Тёмная тема'),
-                  subtitle: Text(_isDarkMode ? 'Включена' : 'Выключена'),
-                  value: _isDarkMode,
-                  onChanged: (value) {
-                    setState(() {
-                      _isDarkMode = value;
-                    });
-                  },
-                ),
-                ListTile(
-                  title: const Text('Размер текста'),
-                  subtitle: Slider(
-                    value: _fontSize,
-                    min: 12,
-                    max: 24,
-                    divisions: 4,
-                    label: '${_fontSize.round()}',
-                    onChanged: (value) {
-                      setState(() {
-                        _fontSize = value;
-                      });
-                    },
+                    'Эта функция находится в разработке',
+                    style: TextStyle(color: Colors.orange[700]),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Уведомления
-          Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'Уведомления',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                // Тема приложения
+                Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Внешний вид',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Тёмная тема'),
+                        subtitle: Text(_isDarkMode ? 'Включена' : 'Выключена'),
+                        value: _isDarkMode,
+                        onChanged: null, // Делаем неактивным
+                      ),
+                      ListTile(
+                        title: const Text('Размер текста'),
+                        subtitle: Slider(
+                          value: _fontSize,
+                          min: 12,
+                          max: 24,
+                          divisions: 4,
+                          label: '${_fontSize.round()}',
+                          onChanged: null, // Делаем неактивным
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SwitchListTile(
-                  title: const Text('Push-уведомления'),
-                  subtitle: const Text('Уведомления о заказах и акциях'),
-                  value: _notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _notificationsEnabled = value;
-                    });
-                  },
+                const SizedBox(height: 16),
+
+                // Уведомления
+                Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Уведомления',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Push-уведомления'),
+                        subtitle: const Text('Уведомления о заказах и акциях'),
+                        value: _notificationsEnabled,
+                        onChanged: null, // Делаем неактивным
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Язык
+                Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Язык',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      RadioListTile<String>(
+                        title: const Text('Русский'),
+                        value: 'Русский',
+                        groupValue: _selectedLanguage,
+                        onChanged: null, // Делаем неактивным
+                      ),
+                      RadioListTile<String>(
+                        title: const Text('English'),
+                        value: 'English',
+                        groupValue: _selectedLanguage,
+                        onChanged: null, // Делаем неактивным
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Кнопка сохранения
+                ElevatedButton(
+                  onPressed: null, // Делаем неактивной
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9191E9).withOpacity(0.5),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Сохранить настройки'),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Язык
-          Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'Язык',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                RadioListTile<String>(
-                  title: const Text('Русский'),
-                  value: 'Русский',
-                  groupValue: _selectedLanguage,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedLanguage = value!;
-                    });
-                  },
-                ),
-                RadioListTile<String>(
-                  title: const Text('English'),
-                  value: 'English',
-                  groupValue: _selectedLanguage,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedLanguage = value!;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Кнопка сохранения
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Сохранить настройки
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Настройки сохранены'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9191E9),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: const Text('Сохранить настройки'),
           ),
         ],
       ),
@@ -1642,6 +1648,347 @@ class AboutAppContent extends StatelessWidget {
             Text('Команда: Giftly'),
             SizedBox(height: 8),
             Text('Дата: 16.05.2025'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SellerAgreementContent extends StatelessWidget {
+  const SellerAgreementContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final profilePage = context.findAncestorStateOfType<_ProfilePageState>();
+            profilePage?._navigateBack();
+          },
+        ),
+        title: const Text(
+          'Положение для продавца',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+            fontSize: 23,
+          ),
+        ),
+      ),
+      body: const SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            Text(
+              '1. Общие положения',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '1.1. Продавец — физ. или юр. лицо, предоставляющее товары (подарки, цветы) для реализации через онлайн-магазин «Название магазина» (далее — Платформа).',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '1.2. Платформа оказывает услуги по размещению товаров, приему платежей и организации доставки.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '1.3. Отношения регулируются данным договором, законодательством РФ (или другой страны) и правилами Платформы.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+
+            Text(
+              '2. Обязанности продавца',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '2.1. Качество товаров:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Товары должны соответствовать описанию, фото и заявленным характеристикам.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Цветы — свежие, подарки — без дефектов.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '2.2. Сроки поставки:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Продавец обязуется передать товар курьеру/службе доставки в течение X часов после подтверждения заказа.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '2.3. Информация:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Актуальные фото, описание, цена и наличие.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Предупреждать Платформу об изменении ассортимента или цен за 3 дня.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '2.4. Соблюдение законов:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Не продавать запрещенные товары (наркотики, оружие и т.д.).',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Иметь все необходимые сертификаты (для пищевых продуктов, детских товаров и т.п.).',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            SizedBox(height: 16),
+            Text(
+              '3. Обязанности Платформы',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '3.1. Размещение товаров:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Создание карточек товаров на сайте.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'SEO-оптимизация и продвижение.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '3.2. Прием платежей:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'Организация оплаты через сайт (карты, электронные деньги).',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '3.3. Доставка:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'Передача заказов курьерским службам или логистическим партнерам.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            SizedBox(height: 16),
+            Text(
+              '4. Финансовые условия',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '4.1. Комиссия Платформы:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'X% от стоимости каждого заказа.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '4.2. Выплаты:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'Перечисление денег продавцу в течение Y банковских дней после доставки.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Возврат средств покупателю — за счет продавца (если товар бракованный).',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '4.3. НДС:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'Если продавец работает с НДС, он обязан указать это в документах.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            SizedBox(height: 16),
+            Text(
+              '5. Ответственность',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+             Text(
+              '5.1. Продавец несет ответственность за:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Несоответствие товара описанию.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Нарушение сроков передачи заказа.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Нанесение ущерба покупателю (например, аллергия из-за некачественных цветов).',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+             Text(
+              '5.2. Платформа не отвечает за:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Действия курьерских служб.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Ошибки в описании, если продавец предоставил неверные данные.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            SizedBox(height: 16),
+             Text(
+              '6. Конфиденциальность',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '6.1. Продавец соглашается на обработку персональных данных в рамках закона.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '6.2. Запрещено передавать данные покупателей третьим лицам.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            SizedBox(height: 16),
+             Text(
+              '7. Срок действия и расторжение',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '7.1. Договор вступает в силу с даты подписания и действует 1 год (с автоматической пролонгацией).',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '7.2. Расторжение возможно:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'По соглашению сторон.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'При нарушении условий одной из сторон (уведомление за 14 дней).',
+              style: TextStyle(fontSize: 14),
+            ),
           ],
         ),
       ),
