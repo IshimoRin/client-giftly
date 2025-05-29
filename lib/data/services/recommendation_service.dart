@@ -28,6 +28,7 @@ class RecommendationService {
         },
         body: jsonEncode({
           'query': query,
+          'limit': 3,
         }),
       );
 

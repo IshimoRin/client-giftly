@@ -52,17 +52,46 @@ class _HelperPageState extends State<HelperPage> {
       
       setState(() {
         if (result['success'] == true) {
+          // Извлекаем бюджет из запроса, если он указан
+          int? budget;
+          final budgetMatch = RegExp(r'бюджет\s*(\d+)').firstMatch(text.toLowerCase());
+          if (budgetMatch != null) {
+            budget = int.tryParse(budgetMatch.group(1) ?? '');
+          }
+
           // Добавляем сообщение с рекомендациями
+          final products = (result['products'] as List?)
+              ?.map<RecommendedProduct>((item) {
+                return RecommendedProduct(
+                  product: item['product'] as Product,
+                  relevance: item['relevance'] as int,
+                );
+              })
+              .toList()
+              ?.where((item) {
+                // Фильтруем по бюджету, если он указан
+                if (budget != null) {
+                  return item.product.price <= budget!;
+                }
+                return true;
+              })
+              .toList()
+              ?..sort((a, b) {
+                // Сначала сортируем по релевантности
+                final relevanceCompare = b.relevance.compareTo(a.relevance);
+                if (relevanceCompare != 0) return relevanceCompare;
+                
+                // При равной релевантности сортируем по цене (от меньшей к большей)
+                return a.product.price.compareTo(b.product.price);
+              });
+
           _messages.add(ChatMessage(
-            text: result['message'],
+            text: budget != null 
+              ? '${result['message']} (в рамках бюджета ${budget}₽)'
+              : result['message'],
             isUser: false,
             timestamp: DateTime.now(),
-            products: result['products']?.map<RecommendedProduct>((item) {
-              return RecommendedProduct(
-                product: item['product'] as Product,
-                relevance: item['relevance'] as int,
-              );
-            }).toList(),
+            products: products?.take(3).toList(), // Берем топ-3 самых релевантных
           ));
         } else {
           _messages.add(ChatMessage(
