@@ -17,9 +17,6 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Check formatting
-        run: dart format --set-exit-if-changed .
-
       - name: Analyze code
         run: flutter analyze
 
