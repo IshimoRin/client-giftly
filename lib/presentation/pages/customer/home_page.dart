@@ -80,7 +80,12 @@ class _HomePageState extends State<HomePage> {
           _MainContent(onCartUpdated: () {
             _cartPageKey.currentState?.updateCart();
           }),
-          HelperPage(),
+          HelperPage(
+            user: _currentUser,
+            onCartUpdated: () {
+              _cartPageKey.currentState?.updateCart();
+            },
+          ),
           FavoritePage(
             user: _currentUser,
             onCartUpdated: () {

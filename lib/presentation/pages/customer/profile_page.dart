@@ -1348,13 +1348,108 @@ class LegalDocsContent extends StatelessWidget {
           ),
         ),
       ),
-      body: const Padding(
+      body: const SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              '1. Общие положения',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '1.1. Настоящая публичная оферта (далее — Оферта) определяет условия продажи товаров через интернет-магазин Продавца по адресу [сайт магазина].',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '1.2. Термины и определения:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             SizedBox(height: 4),
+            Text(
+              'Покупатель – физическое лицо, достигшее 18 лет, заключившее с Продавцом договор купли-продажи на условиях, изложенных в настоящей Оферте.\nЗаказ – заявка Покупателя на приобретение товара, оформленная в интернет-магазине.\nТовар – перечень продукции, представленный на сайте Продавца и имеющий описание и цену.',
+              style: TextStyle(fontSize: 14),
+            ),
             SizedBox(height: 16),
-            // Здесь будут правовые документы
+
+            Text(
+              '2. Предмет оферты',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '2.1. Продавец обязуется передать в собственность Покупателю товар, а Покупатель обязуется принять и оплатить товар на условиях, предусмотренных настоящей Офертой.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '2.2. Договор считается заключенным с момента подтверждения Заказа Продавцом любым доступным способом (по телефону, электронной почте, СМС).',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+
+            Text(
+              '3. Цена и порядок оплаты товара',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '3.1. Цена товара указывается на сайте Продавца в рублях РФ и включает налог на добавленную стоимость (НДС).',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '3.2. Оплата товара производится:\nbанковской картой онлайн;\nналичными курьеру (при доставке);\nбезналичным переводом на расчетный счет Продавца.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 8),
+            Text(
+              '3.3. После оплаты Покупателю направляется электронный чек в соответствии с законодательством РФ.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+
+            Text(
+              '4. Доставка и самовывоз',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '4.1. Доставка товара осуществляется по адресу, указанному Покупателем при оформлении Заказа.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+            Text(
+              '4.2. Стоимость и сроки доставки указываются при оформлении Заказа.',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+            Text(
+              '4.3. Возможен самовывоз товара по адресу: [адрес пункта выдачи].',
+              style: TextStyle(fontSize: 14),
+            ),
+             SizedBox(height: 4),
+            Text(
+              '4.4. В случае изменения времени доставки по вине Покупателя, Продавец оставляет за собой право взимать дополнительную плату.',
+              style: TextStyle(fontSize: 14),
+            ),
           ],
         ),
       ),

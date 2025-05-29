@@ -21,4 +21,5 @@ class ApiConfig {
   static String get cartUrl => '$baseUrl/cart/';
   static String get ordersUrl => '$baseUrl/orders/';
   static String get favoritesUrl => '$baseUrl/favorites/';
+  static String get chatRecommendUrl => '$baseUrl/products/chat-recommend/';
 } 
