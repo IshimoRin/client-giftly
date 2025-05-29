@@ -14,6 +14,7 @@ class HelperPage extends StatefulWidget {
     this.onCartUpdated,
   }) : super(key: key);
 
+
   @override
   _HelperPageState createState() => _HelperPageState();
 }
@@ -30,8 +31,6 @@ class _HelperPageState extends State<HelperPage> {
     'Что подарить на день рождения?',
     'Что подарить маме?',
     'Что подарить девушке?',
-    'Что подарить мужчине?',
-    'Посоветуй букеты для извинений',
   ];
 
   Future<void> _sendMessage(String text) async {
