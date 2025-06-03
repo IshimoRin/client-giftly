@@ -154,11 +154,24 @@ class _MainContentState extends State<_MainContent> {
   final ProductService _productService = ProductService();
   final CartService _cartService = CartService();
   List<Product> _allProducts = [];
+  List<Product> _filteredProducts = [];
   bool _isLoading = true;
   String? _error;
-  final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Все';
+  String _sortBy = 'name';
   bool _isAscending = true;
+  final TextEditingController _searchController = TextEditingController();
+  final List<String> _categories = [
+    'Все',
+    'Букеты',
+    'Композиции',
+    'Подарки',
+    'Свадьба',
+    'Розы',
+    'Тюльпаны',
+    'Пионы',
+    'Хризантемы',
+  ];
 
   @override
   void initState() {
@@ -166,48 +179,313 @@ class _MainContentState extends State<_MainContent> {
     _loadProducts();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final products = await _productService.getProducts();
+      setState(() {
+        _allProducts = products;
+        _applyFilters();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _applyFilters() {
+    var filtered = _allProducts.where((product) {
+      final searchLower = _searchController.text.toLowerCase();
+      final matchesSearch = searchLower.isEmpty || 
+          product.name.toLowerCase().contains(searchLower) ||
+          (product.description?.toLowerCase().contains(searchLower) ?? false);
+      
+      // Обновленная логика фильтрации по категориям
+      bool matchesCategory = _selectedCategory == 'Все';
+      if (!matchesCategory) {
+        final productName = product.name.toLowerCase();
+        final productDesc = product.description?.toLowerCase() ?? '';
+        final category = _selectedCategory.toLowerCase();
+        
+        switch (_selectedCategory) {
+          case 'Свадьба':
+            matchesCategory = productName.contains('свадьб') || 
+                             productName.contains('свадебн') ||
+                             productDesc.contains('свадьб') ||
+                             productDesc.contains('свадебн');
+            break;
+          case 'Розы':
+            matchesCategory = productName.contains('роз') || 
+                             productDesc.contains('роз');
+            break;
+          case 'Тюльпаны':
+            matchesCategory = productName.contains('тюльпан') || 
+                             productDesc.contains('тюльпан');
+            break;
+          case 'Пионы':
+            matchesCategory = productName.contains('пион') || 
+                             productDesc.contains('пион');
+            break;
+          case 'Хризантемы':
+            matchesCategory = productName.contains('хризантем') || 
+                             productDesc.contains('хризантем');
+            break;
+          default:
+            matchesCategory = productName.contains(category) || 
+                             productDesc.contains(category);
+        }
+      }
+      
+      return matchesSearch && matchesCategory;
+    }).toList();
+
+    // Применяем сортировку
+    filtered.sort((a, b) {
+      int comparison;
+      switch (_sortBy) {
+        case 'name':
+          comparison = a.name.compareTo(b.name);
+          break;
+        case 'price':
+          comparison = a.price.compareTo(b.price);
+          break;
+        default:
+          comparison = 0;
+      }
+      return _isAscending ? comparison : -comparison;
+    });
+
+    setState(() {
+      _filteredProducts = filtered;
+    });
+  }
+
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Фильтрация по категориям',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.amber[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Новые категории цветов добавлены в каталог',
+                        style: TextStyle(
+                          color: Colors.amber[900],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Категория',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: _categories.map((category) {
+                  final isSelected = category == _selectedCategory;
+                  final isNewCategory = category == 'Свадьба' || 
+                                      category == 'Розы' || 
+                                      category == 'Тюльпаны' || 
+                                      category == 'Пионы' || 
+                                      category == 'Хризантемы';
+                  return FilterChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(category),
+                        if (isNewCategory) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'новое',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.green[900],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                      this.setState(() {
+                        _selectedCategory = category;
+                        _applyFilters();
+                      });
+                    },
+                    backgroundColor: Colors.grey[200],
+                    selectedColor: const Color(0xFF9191E9).withOpacity(0.2),
+                    checkmarkColor: const Color(0xFF9191E9),
+                    labelStyle: TextStyle(
+                      color: isSelected ? const Color(0xFF9191E9) : Colors.black,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9191E9),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Закрыть',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showSupportDialog() {
-    final TextEditingController emailController = TextEditingController();
     final TextEditingController problemController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Поддержка'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.support_agent, color: const Color(0xFF9191E9), size: 24),
+            const SizedBox(width: 8),
+            const Text(
+              'Поддержка Gifty',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         content: Form(
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Введите ваш email',
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF9191E9).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Пожалуйста, введите корректный email';
-                  }
-                  return null;
-                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF9191E9), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Мы всегда готовы помочь вам с любым вопросом',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF9191E9),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: problemController,
-                decoration: const InputDecoration(
-                  labelText: 'Опишите вашу проблему',
-                  hintText: 'Напишите подробно о вашей проблеме',
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Опишите ваш вопрос или проблему',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF9191E9), width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
-                maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, опишите вашу проблему';
+                    return 'Пожалуйста, опишите ваш вопрос';
                   }
                   return null;
                 },
@@ -218,7 +496,10 @@ class _MainContentState extends State<_MainContent> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text(
+              'Отмена',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -235,68 +516,22 @@ class _MainContentState extends State<_MainContent> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF9191E9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: const Text(
               'Отправить',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _loadProducts() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      final allProducts = await _productService.getProducts();
-
-      if (mounted) {
-        setState(() {
-          _allProducts = allProducts;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  List<Product> get _filteredProducts {
-    var filtered = _allProducts.where((product) {
-      final searchLower = _searchController.text.toLowerCase();
-      final matchesSearch = searchLower.isEmpty || 
-          product.name.toLowerCase().contains(searchLower) ||
-          (product.description?.toLowerCase().contains(searchLower) ?? false);
-      final matchesCategory = _selectedCategory == 'Все' || product.name.contains(_selectedCategory);
-      return matchesSearch && matchesCategory;
-    }).toList();
-
-    // Сортировка по цене
-    filtered.sort((a, b) {
-      if (_isAscending) {
-        return a.price.compareTo(b.price);
-      } else {
-        return b.price.compareTo(a.price);
-      }
-    });
-
-    return filtered;
-  }
-
-  void _toggleSort() {
-    setState(() {
-      _isAscending = !_isAscending;
-    });
   }
 
   Future<void> _addToCart(Product product) async {
@@ -449,7 +684,9 @@ class _MainContentState extends State<_MainContent> {
                               contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                             ),
                             onChanged: (value) {
-                              setState(() {});
+                              setState(() {
+                                _applyFilters();
+                              });
                             },
                           ),
                         ),
@@ -469,14 +706,145 @@ class _MainContentState extends State<_MainContent> {
                               ),
                             ],
                           ),
-                          child: IconButton(
+                          child: PopupMenuButton<String>(
                             icon: Icon(
-                              _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                              _sortBy == 'name' 
+                                  ? (_isAscending ? Icons.sort_by_alpha : Icons.sort_by_alpha_outlined)
+                                  : (_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
                               color: const Color(0xFF9191E9),
                               size: 20,
                             ),
-                            onPressed: _toggleSort,
-                            tooltip: _isAscending ? 'По возрастанию' : 'По убыванию',
+                            tooltip: 'Сортировка',
+                            onSelected: (String value) {
+                              setState(() {
+                                switch (value) {
+                                  case 'name_asc':
+                                    _sortBy = 'name';
+                                    _isAscending = true;
+                                    break;
+                                  case 'name_desc':
+                                    _sortBy = 'name';
+                                    _isAscending = false;
+                                    break;
+                                  case 'price_asc':
+                                    _sortBy = 'price';
+                                    _isAscending = true;
+                                    break;
+                                  case 'price_desc':
+                                    _sortBy = 'price';
+                                    _isAscending = false;
+                                    break;
+                                }
+                                _applyFilters();
+                              });
+                            },
+                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                              PopupMenuItem<String>(
+                                value: 'name_asc',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort_by_alpha,
+                                      size: 20,
+                                      color: _sortBy == 'name' && _isAscending 
+                                          ? const Color(0xFF9191E9) 
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'По названию (А-Я)',
+                                      style: TextStyle(
+                                        color: _sortBy == 'name' && _isAscending 
+                                            ? const Color(0xFF9191E9) 
+                                            : Colors.black,
+                                        fontWeight: _sortBy == 'name' && _isAscending 
+                                            ? FontWeight.bold 
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'name_desc',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort_by_alpha_outlined,
+                                      size: 20,
+                                      color: _sortBy == 'name' && !_isAscending 
+                                          ? const Color(0xFF9191E9) 
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'По названию (Я-А)',
+                                      style: TextStyle(
+                                        color: _sortBy == 'name' && !_isAscending 
+                                            ? const Color(0xFF9191E9) 
+                                            : Colors.black,
+                                        fontWeight: _sortBy == 'name' && !_isAscending 
+                                            ? FontWeight.bold 
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              PopupMenuItem<String>(
+                                value: 'price_asc',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_upward,
+                                      size: 20,
+                                      color: _sortBy == 'price' && _isAscending 
+                                          ? const Color(0xFF9191E9) 
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'По цене (возрастание)',
+                                      style: TextStyle(
+                                        color: _sortBy == 'price' && _isAscending 
+                                            ? const Color(0xFF9191E9) 
+                                            : Colors.black,
+                                        fontWeight: _sortBy == 'price' && _isAscending 
+                                            ? FontWeight.bold 
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'price_desc',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_downward,
+                                      size: 20,
+                                      color: _sortBy == 'price' && !_isAscending 
+                                          ? const Color(0xFF9191E9) 
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'По цене (убывание)',
+                                      style: TextStyle(
+                                        color: _sortBy == 'price' && !_isAscending 
+                                            ? const Color(0xFF9191E9) 
+                                            : Colors.black,
+                                        fontWeight: _sortBy == 'price' && !_isAscending 
+                                            ? FontWeight.bold 
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -496,9 +864,7 @@ class _MainContentState extends State<_MainContent> {
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.filter_list, color: Color(0xFF9191E9), size: 20),
-                            onPressed: () {
-                              // TODO: Открыть фильтры
-                            },
+                            onPressed: _showFilterDialog,
                           ),
                         ),
                       ],
@@ -518,10 +884,44 @@ class _MainContentState extends State<_MainContent> {
                       const SizedBox(height: 16),
                       Image.asset('assets/images/banner.png'),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Каталог букетов',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Каталог букетов',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
+                      if (_selectedCategory != 'Все')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            children: [
+                              Chip(
+                                label: Text(_selectedCategory),
+                                backgroundColor: const Color(0xFF9191E9).withOpacity(0.1),
+                                labelStyle: const TextStyle(
+                                  color: Color(0xFF9191E9),
+                                ),
+                                deleteIcon: const Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: Color(0xFF9191E9),
+                                ),
+                                onDeleted: () {
+                                  setState(() {
+                                    _selectedCategory = 'Все';
+                                    _applyFilters();
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 8),
                       GridView.builder(
                         shrinkWrap: true,
@@ -603,6 +1003,10 @@ class _MainContentState extends State<_MainContent> {
                           final index = _allProducts.indexWhere((p) => p.id == product.id);
                           if (index != -1) {
                             _allProducts[index] = updatedProduct;
+                            final filteredIndex = _filteredProducts.indexWhere((p) => p.id == product.id);
+                            if (filteredIndex != -1) {
+                              _filteredProducts[filteredIndex] = updatedProduct;
+                            }
                           }
                         });
                         if (mounted) {

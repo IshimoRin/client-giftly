@@ -7,6 +7,7 @@ import '../../widgets/login_prompt.dart';
 import '../../../data/services/product_service.dart';
 import '../../../data/services/cart_service.dart';
 import '../../../domain/models/product.dart';
+import '../../../data/services/analytics_service.dart';
 
 class FavoritePage extends StatefulWidget {
   final User user;
@@ -27,6 +28,7 @@ class FavoritePage extends StatefulWidget {
 class _FavoritePageState extends State<FavoritePage> with AutomaticKeepAliveClientMixin {
   final ProductService _productService = ProductService();
   final CartService _cartService = CartService();
+  final AnalyticsService _analyticsService = AnalyticsService();
   List<Product> _favorites = [];
   bool _isLoading = true;
   String? _error;
@@ -118,21 +120,69 @@ class _FavoritePageState extends State<FavoritePage> with AutomaticKeepAliveClie
     }
   }
 
+  Future<void> _addToFavorites(Product product) async {
+    try {
+      await _productService.addToFavorites(product.id);
+      
+      // Логируем добавление в избранное
+      await _analyticsService.logAddToFavorites(
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+      );
+
+      if (mounted) {
+        widget.onFavoritesUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар добавлен в избранное'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка при добавлении в избранное: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _addToCart(Product product) async {
     try {
       await _cartService.addToCart(product.id);
-      widget.onCartUpdated();
       
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Товар добавлен в корзину'),
-          backgroundColor: Colors.green,
-        ),
+      // Логируем добавление в корзину
+      await _analyticsService.logAddToCart(
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        quantity: 1,
       );
+
+      if (mounted) {
+        widget.onCartUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар добавлен в корзину'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+      });
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

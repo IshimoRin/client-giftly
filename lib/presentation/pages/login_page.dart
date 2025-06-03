@@ -26,12 +26,32 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isSellerLogin = false;
+  String? _errorMessage;
+
+  String _getUserFriendlyErrorMessage(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+    
+    if (errorString.contains('timeout')) {
+      return 'Превышено время ожидания ответа от сервера. Проверьте интернет-соединение.';
+    } else if (errorString.contains('неверный логин или пароль')) {
+      return 'Неверный email или пароль';
+    } else if (errorString.contains('зарегистрированы')) {
+      // Изменяем формат сообщения о роли
+      final message = error.toString().replaceAll('Exception: ', '');
+      return message.replaceAll('Вы зарегистрированы как ', 'Вы зарегистрированы ');
+    } else if (errorString.contains('connection refused')) {
+      return 'Не удалось подключиться к серверу. Проверьте интернет-соединение.';
+    } else {
+      return 'Произошла ошибка при входе';
+    }
+  }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
@@ -68,20 +88,33 @@ class _LoginPageState extends State<LoginPage> {
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Вход выполнен успешно'),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                const Text('Вход выполнен успешно'),
+              ],
+            ),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
-        );
+        final userFriendlyMessage = _getUserFriendlyErrorMessage(e);
+        setState(() {
+          _errorMessage = userFriendlyMessage;
+          // Очищаем поле пароля только если это не ошибка роли
+          if (!userFriendlyMessage.contains('зарегистрированы')) {
+            passwordController.clear();
+          }
+        });
       }
     } finally {
       if (mounted) {
@@ -201,14 +234,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(
+                        color: _errorMessage != null ? Colors.red.shade300 : Colors.grey.shade300,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: Color(0xFF9191E9), width: 2),
+                      borderSide: BorderSide(
+                        color: _errorMessage != null ? Colors.red.shade400 : Color(0xFF9191E9),
+                        width: 2,
+                      ),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: _errorMessage != null ? Colors.red.shade50 : Colors.grey.shade50,
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -221,7 +259,49 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
-
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!_errorMessage!.contains('зарегистрированы')) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Проверьте правильность введенного логина и пароля',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(

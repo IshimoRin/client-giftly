@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/services/cart_service.dart';
+import '../../../data/services/analytics_service.dart';
 import '../../../domain/models/cart.dart';
 import '../../../domain/models/user.dart';
 import 'checkout_page.dart';
@@ -22,8 +23,10 @@ class CartPage extends StatefulWidget {
 
 class CartPageState extends State<CartPage> {
   final CartService _cartService = CartService();
+  final AnalyticsService _analyticsService = AnalyticsService();
   Future<Cart>? _cartFuture;
   Cart? _cart;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -53,6 +56,56 @@ class CartPageState extends State<CartPage> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _createOrder() async {
+    try {
+      setState(() => _isLoading = true);
+      
+      if (widget.user.phone == null) {
+        throw Exception('Номер телефона не указан');
+      }
+      
+      final order = await _cartService.createOrder(
+        contactPhone: widget.user.phone!,
+        deliveryAddress: 'Самовывоз', // Используем фиксированный адрес для самовывоза
+      );
+      
+      // Логируем создание заказа
+      if (order.id != null) {
+        await _analyticsService.logOrderCreated(
+          orderId: order.id!,
+          totalAmount: order.totalAmount,
+          itemsCount: order.items.length,
+          productIds: order.items.map((item) => item.productId).toList(),
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Заказ успешно оформлен'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Очищаем корзину после успешного оформления
+        await _cartService.clearCart();
+        _loadCartItems();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при оформлении заказа: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }

@@ -320,73 +320,80 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Метод для отображения диалога поддержки (скопировано из home_page.dart)
   void _showSupportDialog() {
-    final TextEditingController emailController = TextEditingController();
     final TextEditingController problemController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Поддержка'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.support_agent, color: const Color(0xFF9191E9), size: 24),
+            const SizedBox(width: 8),
+            const Text(
+              'Поддержка Gifty',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         content: Form(
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Введите ваш email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF9191E9).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Пожалуйста, введите корректный email';
-                  }
-                  return null;
-                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF9191E9), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Мы всегда готовы помочь вам с любым вопросом',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF9191E9),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: problemController,
+                maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: 'Опишите вашу проблему',
-                  hintText: 'Напишите подробно о вашей проблеме',
+                  hintText: 'Опишите ваш вопрос или проблему',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: Color(0xFF91BDE9), width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF9191E9), width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.grey.shade50,
                 ),
-                maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, опишите вашу проблему';
+                    return 'Пожалуйста, опишите ваш вопрос';
                   }
                   return null;
                 },
@@ -397,13 +404,15 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text(
+              'Отмена',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
                 // TODO: Отправить сообщение в поддержку
-                print('Сообщение отправлено в поддержку от ${emailController.text}'); // Логируем email
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Сообщение отправлено в поддержку'),
@@ -415,10 +424,17 @@ class _ProfilePageState extends State<ProfilePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF9191E9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: const Text(
               'Отправить',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -1353,6 +1369,8 @@ class LegalDocsContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            SizedBox(height: 16),
             Text(
               '1. Общие положения',
               style: TextStyle(

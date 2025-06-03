@@ -37,7 +37,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isLoading = false;
   bool _showPaymentForm = false;
   bool _isSelfPickup = false;
-  int _selectedIndex = 3;
 
   @override
   void dispose() {
@@ -129,57 +128,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
           _isLoading = false;
         });
       }
-    }
-  }
-
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
-    
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(user: widget.user),
-        ),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HelperPage(
-            user: widget.user,
-            onCartUpdated: widget.onOrderComplete,
-          ),
-        ),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FavoritePage(
-            user: widget.user,
-            onCartUpdated: widget.onOrderComplete,
-            onFavoritesUpdated: () {},
-          ),
-        ),
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CartPage(user: widget.user),
-        ),
-      );
-    } else if (index == 4) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfilePage(
-            user: widget.user,
-            onUserUpdated: (updatedUser) {},
-          ),
-        ),
-      );
     }
   }
 
@@ -633,35 +581,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Главная',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'ИИ Помощник',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Избранное',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Корзина',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Профиль',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF91BDE9),
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
       ),
     );
   }

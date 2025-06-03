@@ -3,6 +3,7 @@ import '../../../domain/models/user.dart';
 import '../../../domain/models/product.dart';
 import '../../../data/services/recommendation_service.dart';
 import '../../../data/services/cart_service.dart';
+import '../../../data/services/analytics_service.dart';
 
 class HelperPage extends StatefulWidget {
   final User? user;
@@ -24,17 +25,25 @@ class _HelperPageState extends State<HelperPage> {
   final TextEditingController _controller = TextEditingController();
   final RecommendationService _recommendationService = RecommendationService();
   final CartService _cartService = CartService();
+  final AnalyticsService _analyticsService = AnalyticsService();
   bool _isLoading = false;
 
   final List<String> _quickSuggestions = [
-    'Что подарить на свадьбу?',
-    'Что подарить на день рождения?',
+    'Свадебный букет бюджет 4000',
+    'Букет бюджет 3000',
     'Что подарить маме?',
     'Что подарить девушке?',
   ];
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty || _isLoading) return;
+
+    // Логируем сообщение пользователя
+    await _analyticsService.logAIMessage(
+      query: text,
+      isUserMessage: true,
+      recommendationsCount: 0,
+    );
 
     setState(() {
       _messages.add(ChatMessage(
@@ -49,6 +58,16 @@ class _HelperPageState extends State<HelperPage> {
 
     try {
       final result = await _recommendationService.getRecommendations(text);
+      
+      // Логируем ответ ИИ с рекомендациями
+      await _analyticsService.logAIMessage(
+        query: text,
+        isUserMessage: false,
+        recommendationsCount: (result['products'] as List?)?.length ?? 0,
+        recommendedProductIds: (result['products'] as List?)
+            ?.map((item) => (item['product'] as Product).id)
+            .toList(),
+      );
       
       setState(() {
         if (result['success'] == true) {
@@ -263,10 +282,17 @@ class _ChatMessageWidget extends StatelessWidget {
   Future<void> _addToCart(BuildContext context, Product product) async {
     try {
       await cartService.addToCart(product.id);
+      
+      // Логируем добавление в корзину
+      await AnalyticsService().logAddToCart(
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        quantity: 1,
+      );
+
       if (context.mounted) {
-        // Вызываем callback для обновления корзины
         onCartUpdated?.call();
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Товар добавлен в корзину'),
